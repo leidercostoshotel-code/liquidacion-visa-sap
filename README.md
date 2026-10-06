@@ -56,6 +56,7 @@ Ningún dato sale del navegador: todo el procesamiento es local.
 ## Estructura
 
 ```
+.firebaserc           proyecto de Firebase por defecto (liquidacion-sap)
 firebase.json         configuración de Firebase Hosting (publica la carpeta public/)
 public/index.html     página mínima: carga SheetJS y app.js
 public/app.js         la aplicación completa: estilos, interfaz y lógica
@@ -67,10 +68,11 @@ Requiere [Firebase CLI](https://firebase.google.com/docs/cli) (`npm install -g f
 
 ```
 firebase login
-firebase deploy --only hosting --project SU-PROYECTO
+firebase deploy --only hosting
 ```
 
-Para probar en local antes de publicar: `firebase serve --only hosting`.
+La página queda en https://liquidacion-sap.web.app. Para probar en local antes de publicar:
+`firebase serve --only hosting`.
 
 ---
 
