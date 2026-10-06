@@ -13,8 +13,13 @@ Firebase Hosting.
 3. **Arma el asiento** de cada liquidación: crédito del importe bruto, débito de la comisión
    con su centro de costo y débito del neto a la cuenta del banco.
 4. **Convierte a moneda local** con un tipo de cambio por cada fecha de abono.
-5. **Exporta** un `.xlsx` con la hoja `SAP` y sus 22 columnas, importes como texto con
-   prefijo de moneda (`USD 990.00`, `SOL 3,514.50`).
+5. **Exporta** un `.xlsx` con dos hojas:
+   - `SAP`: las 22 columnas para importar, importes como texto con prefijo de moneda
+     (`USD 990.00`, `SOL 3,514.50`). Encabezado azul, cada asiento en su propio color de
+     banda, débitos en azul y créditos en morado. Los estilos no cambian ningún valor.
+   - `Resumen`: un asiento por fila con número, fecha de abono en formato de fecha,
+     comercio, importes con separador de miles, tipo de cambio, estado de cuadre y totales
+     con fórmulas.
 
 ## Cómo decide la cuenta de crédito
 
@@ -50,7 +55,8 @@ créditos cuadren exactamente.
 ## Tecnología
 
 HTML, CSS y JavaScript sin framework. La única dependencia es
-[SheetJS](https://sheetjs.com) 0.18.5, cargada desde CDN, para leer y escribir el `.xlsx`.
+[xlsx-js-style](https://github.com/gitbrent/xlsx-js-style) 1.2.0 (SheetJS 0.18.5 con
+soporte de colores y formatos), cargada desde CDN, para leer y escribir el `.xlsx`.
 Ningún dato sale del navegador: todo el procesamiento es local.
 
 ## Estructura

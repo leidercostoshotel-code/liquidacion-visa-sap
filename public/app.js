@@ -854,11 +854,100 @@ function buildAOA(){
   });
   return aoa;
 }
-function xlsxBlob(){
+/* Estilos del Excel (xlsx-js-style): solo cambian el aspecto, no los valores que lee SAP. */
+const XS = (()=>{
+  const borde = c => { const b={style:'thin',color:{rgb:c}}; return {top:b,bottom:b,left:b,right:b}; };
+  const fuente = (x={}) => Object.assign({name:'Calibri',sz:10,color:{rgb:'1A2533'}},x);
+  return {
+    borde, fuente,
+    titulo:{font:fuente({sz:14,bold:true,color:{rgb:'FFFFFF'}}), fill:{fgColor:{rgb:'0B2E59'}}, alignment:{vertical:'center',indent:1}},
+    subtitulo:{font:fuente({italic:true,color:{rgb:'4F5D6E'}})},
+    encabezado:{font:fuente({bold:true,color:{rgb:'FFFFFF'}}), fill:{fgColor:{rgb:'0B2E59'}},
+      alignment:{horizontal:'center',vertical:'center',wrapText:true}, border:borde('0B2E59')},
+    total:{font:fuente({bold:true}), fill:{fgColor:{rgb:'DCE7F5'}}, border:borde('A3C1E6')},
+    banda:['FFFFFF','EEF3FA'],
+    debito:'1D5FA8', credito:'8A4A86',
+    estado:{ok:['DBEEE4','17764A'], warn:['F6EBD2','8A5D00'], crit:['F7E0DC','A02F22']},
+  };
+})();
+const celda = (r,c) => XLSX.utils.encode_cell({r,c});
+// Número de serie de Excel para una fecha {d,m,y}, sin depender de la zona horaria.
+const serialExcel = f => (Date.UTC(f.y,f.m-1,f.d) - Date.UTC(1899,11,30)) / 86400000;
+
+function hojaSAP(){
+  const k=cfg();
   const ws=XLSX.utils.aoa_to_sheet(buildAOA());
   ws['!cols']=[{wch:14},{wch:34},{wch:14},{wch:14},{wch:15},{wch:15},{wch:14},{wch:14},{wch:46},{wch:13},{wch:14},{wch:16},{wch:24},{wch:14},{wch:16},{wch:13},{wch:12},{wch:19},{wch:16},{wch:24},{wch:30},{wch:19}];
+  ws['!rows']=[]; ws['!rows'][1]={hpt:30};
+  for(let c=0;c<22;c++) ws[celda(1,c)].s=XS.encabezado;
+  // Cada asiento con su propio color de banda; las filas de separación quedan vacías.
+  const inc=S.asientos.filter(a=>a.incluir);
+  let r=2;
+  inc.forEach((a,ai)=>{
+    const fill={fgColor:{rgb:XS.banda[ai%2]}};
+    for(let n=0;n<a.lineas.length;n++,r++) for(let c=0;c<22;c++){
+      const ref=celda(r,c);
+      if(!ws[ref]) ws[ref]={t:'s',v:''};
+      const deb=c===2||c===4||c===6, cre=c===3||c===5||c===7;
+      ws[ref].s={
+        fill, border:XS.borde('D6DDE6'),
+        font:XS.fuente({bold:c===0, color:{rgb: deb?XS.debito : cre?XS.credito : '1A2533'}}),
+        alignment:{horizontal: deb||cre ? 'right' : (c>=10&&c<=16 ? 'center' : 'left'), vertical:'center'},
+      };
+    }
+    if(k.sep) r++;
+  });
+  return ws;
+}
+
+function hojaResumen(){
+  const k=cfg(), inc=S.asientos.filter(a=>a.incluir);
+  const H=['N°','Fecha de abono','Comercio','Transacciones',`Bruto ${k.pfME}`,`Comisión ${k.pfME}`,`Neto ${k.pfME}`,'Tipo de cambio',`Total ${k.pfLoc}`,'Estado'];
+  const ahora=new Date();
+  const gen=`${p2(ahora.getDate())}/${p2(ahora.getMonth()+1)}/${ahora.getFullYear()} ${p2(ahora.getHours())}:${p2(ahora.getMinutes())}`;
+  const ws=XLSX.utils.aoa_to_sheet([
+    ['Liquidación VISA → SAP · Resumen de asientos'],
+    [`Archivo origen: ${S.fileName||'—'} · Generado el ${gen}`],
+    [], H,
+  ]);
+  ws['!merges']=[{s:{r:0,c:0},e:{r:0,c:9}},{s:{r:1,c:0},e:{r:1,c:9}}];
+  ws['!cols']=[{wch:6},{wch:15},{wch:14},{wch:14},{wch:16},{wch:16},{wch:16},{wch:15},{wch:16},{wch:18}];
+  ws['!rows']=[{hpt:26},{hpt:16},{hpt:8},{hpt:30}];
+  for(let c=0;c<10;c++){ ws[celda(0,c)]=ws[celda(0,c)]||{t:'s',v:''}; ws[celda(0,c)].s=XS.titulo; ws[celda(3,c)].s=XS.encabezado; }
+  ws[celda(1,0)].s=XS.subtitulo;
+  const fmt=['0','dd/mm/yyyy','@','0','#,##0.00','#,##0.00','#,##0.00','0.0000','#,##0.00','@'];
+  const ini=4;
+  inc.forEach((a,i)=>{
+    const q=cuadre(a), tc=Number(a.tc)||0, r=ini+i;
+    const est = q.ok ? ['Cuadra','ok'] : tc>0 ? [`Diferencia ${money(q.difS)}`,'crit'] : ['Sin tipo de cambio','warn'];
+    const vals=[i+1, serialExcel(a.fecha), String(a.comercio), a.nTrx, a.bruto, a.comision, a.neto, tc||null, tc?q.dS:null, est[0]];
+    const fill={fgColor:{rgb:XS.banda[i%2]}};
+    vals.forEach((v,c)=>{
+      const ref=celda(r,c);
+      ws[ref] = v==null ? {t:'s',v:''} : typeof v==='number' ? {t:'n',v,z:fmt[c]} : {t:'s',v};
+      ws[ref].s={fill, border:XS.borde('D6DDE6'), font:XS.fuente({bold:c===0}),
+        alignment:{horizontal: c<=1||c===3 ? 'center' : (c===2 ? 'left' : 'right'), vertical:'center'}};
+      if(c===9){
+        const [bg,fg]=XS.estado[est[1]];
+        ws[ref].s=Object.assign({},ws[ref].s,{fill:{fgColor:{rgb:bg}}, font:XS.fuente({bold:true,color:{rgb:fg}}), alignment:{horizontal:'center'}});
+      }
+    });
+  });
+  // Fila de totales con fórmulas, para que se recalculen si se edita el resumen.
+  const rt=ini+inc.length; // en notación de Excel los datos van de la fila ini+1 a la rt
+  const suma=(c,z)=>{ const col=XLSX.utils.encode_col(c);
+    const v=inc.reduce((t,a)=>t+(c===3?a.nTrx:c===4?a.bruto:c===5?a.comision:c===6?a.neto:(Number(a.tc)?cuadre(a).dS:0)),0);
+    return {t:'n', v:r2(v), f:inc.length?`SUM(${col}${ini+1}:${col}${rt})`:undefined, z}; };
+  const tot=[{t:'s',v:''},{t:'s',v:''},{t:'s',v:'Totales'},suma(3,'0'),suma(4,'#,##0.00'),suma(5,'#,##0.00'),suma(6,'#,##0.00'),{t:'s',v:''},suma(8,'#,##0.00'),{t:'s',v:''}];
+  tot.forEach((x,c)=>{ x.s=Object.assign({},XS.total,{alignment:{horizontal: c===2?'left':(c===3?'center':'right')}}); ws[celda(rt,c)]=x; });
+  ws['!ref']=XLSX.utils.encode_range({s:{r:0,c:0},e:{r:rt,c:9}});
+  return ws;
+}
+
+function xlsxBlob(){
   const wb=XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb,ws,'SAP');
+  XLSX.utils.book_append_sheet(wb,hojaSAP(),'SAP');
+  XLSX.utils.book_append_sheet(wb,hojaResumen(),'Resumen');
   const buf=XLSX.write(wb,{bookType:'xlsx',type:'array'});
   return new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
 }
