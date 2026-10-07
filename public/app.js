@@ -414,6 +414,10 @@ const INTERFAZ = `
       <button class="toggle" type="button" data-fold="s4">+</button>
     </div>
     <div class="step-body">
+      <div class="exportrow" style="margin-bottom:16px">
+        <button class="btn primary" type="button" id="dl">Descargar Excel con la pestaña SAP</button>
+        <div id="status"></div>
+      </div>
       <dl class="sum" id="sum4"></dl>
       <div class="toolbar">
         <label class="fld"><span>Filtrar por fecha de abono</span><select id="fFecha"></select></label>
@@ -424,17 +428,13 @@ const INTERFAZ = `
         <button class="btn sm" type="button" id="expandAll" style="align-self:flex-end">Abrir / cerrar todo</button>
       </div>
       <div id="asientos"></div>
-      <div class="exportrow" style="margin-top:18px">
-        <button class="btn primary" type="button" id="dl">Descargar Excel con la pestaña SAP</button>
-        <div id="status"></div>
-      </div>
     </div>
   </section>
 
   <footer>
     Comisión del asiento = importe bruto − importe neto de la liquidación, que equivale a COMISIÓN TOTAL + COMISIÓN IGV y además absorbe las comisiones devueltas en las operaciones negativas.
     Los importes en soles se calculan al tipo de cambio de la fecha de abono y se redondean a dos decimales.<br>
-    Leider Tisnado Mego · Soluciones Digitales · Versión 4 · Logo y favicon
+    Leider Tisnado Mego · Soluciones Digitales · Versión 5 · Encabezados inmovilizados
   </footer>
 </div>
 `;
@@ -961,11 +961,25 @@ function hojaResumen(){
   return ws;
 }
 
+// xlsx-js-style no escribe paneles inmovilizados: se agregan al XML de cada hoja dentro del zip.
+function inmovilizar(buf, filas){
+  const zip=XLSX.CFB.read(new Uint8Array(buf),{type:'buffer'});
+  for(const ruta in filas){
+    const f=XLSX.CFB.find(zip,ruta); if(!f) continue;
+    const n=filas[ruta], c='A'+(n+1);
+    const pane=`<pane ySplit="${n}" topLeftCell="${c}" activePane="bottomLeft" state="frozen"/><selection pane="bottomLeft" activeCell="${c}" sqref="${c}"/>`;
+    const xml=new TextDecoder().decode(f.content).replace(/<sheetView([^>]*)\/>/, `<sheetView$1>${pane}</sheetView>`);
+    f.content=new TextEncoder().encode(xml);
+  }
+  return XLSX.CFB.write(zip,{type:'array',fileType:'zip',compression:true});
+}
 function xlsxBlob(){
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,hojaSAP(),'SAP');
   XLSX.utils.book_append_sheet(wb,hojaResumen(),'Resumen');
-  const buf=XLSX.write(wb,{bookType:'xlsx',type:'array'});
+  // SAP: fila en blanco + encabezado. Resumen: título, subtítulo, separación y encabezado.
+  const buf=inmovilizar(XLSX.write(wb,{bookType:'xlsx',type:'array'}),
+    {'/xl/worksheets/sheet1.xml':2, '/xl/worksheets/sheet2.xml':4});
   return new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
 }
 function nombreArchivo(){
