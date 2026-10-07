@@ -255,6 +255,10 @@ tr.tot td{background:var(--surface-2); font-weight:600}
 .pill.ok{background:var(--ok-soft); color:var(--ok)}
 .pill.warn{background:var(--warn-soft); color:var(--warn)}
 .pill.crit{background:var(--crit-soft); color:var(--crit)}
+.btn.copiar{flex:0 0 auto; padding:3px 11px; font-size:12px}
+.btn.copiar.hecho{background:var(--ok); border-color:var(--ok); color:#fff}
+.asiento.copiado{border-color:var(--ok)}
+.asiento.copiado .ah{background:var(--ok-soft)}
 .note{
   font-size:12px; color:var(--warn); background:var(--warn-soft);
   border:1px solid color-mix(in srgb, var(--warn) 35%, transparent);
@@ -434,7 +438,7 @@ const INTERFAZ = `
   <footer>
     Comisión del asiento = importe bruto − importe neto de la liquidación, que equivale a COMISIÓN TOTAL + COMISIÓN IGV y además absorbe las comisiones devueltas en las operaciones negativas.
     Los importes en soles se calculan al tipo de cambio de la fecha de abono y se redondean a dos decimales.<br>
-    Leider Tisnado Mego · Soluciones Digitales · Versión 5 · Encabezados inmovilizados
+    Leider Tisnado Mego · Soluciones Digitales · Versión 6 · Copiar para SAP
   </footer>
 </div>
 `;
@@ -461,6 +465,7 @@ const S = {
   ctaComercio:{},         // comercio -> cuenta por defecto
   asientos:[],            // modelo editable
   open:new Set(),
+  copiados:new Map(),      // id de asiento -> texto copiado al portapapeles
 };
 
 /* ---------------- utilidades de columnas ---------------- */
@@ -752,7 +757,8 @@ function renderAsientos(){
   const k=cfg();
   for(const a of list){
     const q=cuadre(a);
-    const card=el('div','asiento'+(S.open.has(a.id)?' open':'')+(a.incluir?'':' off'));
+    const txt=textoSAP(a,k), copiado=S.copiados.get(a.id)===txt;
+    const card=el('div','asiento'+(S.open.has(a.id)?' open':'')+(a.incluir?'':' off')+(copiado?' copiado':''));
 
     const head=el('div','ah');
     const cb=el('input'); cb.type='checkbox'; cb.checked=a.incluir;
@@ -768,6 +774,18 @@ function renderAsientos(){
     const pill = el('div','pill '+(q.ok?'ok':((Number(a.tc)||0)>0?'crit':'warn')),
       q.ok ? 'cuadra' : ((Number(a.tc)||0)>0 ? 'dif '+money(q.difS) : 'sin TC'));
     head.append(pill);
+    const sinTC=!(Number(a.tc)>0);
+    const bc=el('button','btn sm copiar'+(copiado?' hecho':''), copiado?'Copiado ✓':'Copiar');
+    bc.type='button'; bc.disabled=sinTC;
+    bc.title = sinTC ? 'Falta el tipo de cambio de esta fecha (paso 3)' : 'Copia las líneas sin encabezado para pegarlas en SAP';
+    bc.addEventListener('click',async e=>{
+      e.stopPropagation();
+      const t=textoSAP(a,cfg());
+      if(!(await copiarTexto(t))){ bc.textContent='No se pudo copiar'; return; }
+      S.copiados.set(a.id,t);
+      card.classList.add('copiado'); bc.classList.add('hecho'); bc.textContent='Copiado ✓';
+    });
+    head.append(bc);
     head.addEventListener('click',()=>{ if(S.open.has(a.id)) S.open.delete(a.id); else S.open.add(a.id); card.classList.toggle('open'); });
     card.append(head);
 
@@ -845,31 +863,46 @@ function renderAsientos(){
 /* ---------------- exportar ---------------- */
 const HDR = ['Cuenta de mayor/Código SN','Cuenta de mayor/Nombre SN','Débito (ME)','Crédito (ME)','Débito','Crédito','Débito (MS)','Crédito (MS)','Comentarios','Centro de Costo','Bloqueo de pago','Motivo del bloqueo','Ejecución de orden de pago','Cuenta destino','Cuenta patrimonial','Comp. destino','Procesado DC','Info socio de negocios','Info de terceros','Tipo doc. - Serie - Numero','Socio Negocios','Fecha Registro Ventas'];
 
+function filasAsiento(a,k){
+  const q=cuadre(a);
+  return a.lineas.map((l,i)=>{
+    const me=`${k.pfME} ${money(l.me)}`, loc=`${k.pfLoc} ${money(q.sol[i])}`;
+    const D=l.dc==='D';
+    const row=new Array(22).fill(null);
+    const cta=Number(l.cta); row[0]=Number.isFinite(cta)&&String(cta)===l.cta?cta:l.cta;
+    row[1]=nombreCta(l.cta)||null;
+    row[2]=D?me:null;  row[3]=D?null:me;
+    row[4]=D?loc:null; row[5]=D?null:loc;
+    row[6]=D?me:null;  row[7]=D?null:me;
+    row[8]=l.comentario||null;
+    row[9]=l.cc? (Number.isFinite(Number(l.cc))?Number(l.cc):l.cc) : null;
+    row[10]='N'; row[12]='N'; row[16]='No';
+    if(k.socio){ row[19]=l.doc||null; row[20]=l.socio||null; }
+    if(k.fecha) row[21]=dmyOf(a.fecha);
+    return row;
+  });
+}
 function buildAOA(){
   const k=cfg();
   const aoa=[ new Array(22).fill(null), HDR.slice() ];
   const inc=S.asientos.filter(a=>a.incluir);
   inc.forEach((a,ai)=>{
-    const q=cuadre(a);
-    a.lineas.forEach((l,i)=>{
-      const me=`${k.pfME} ${money(l.me)}`, loc=`${k.pfLoc} ${money(q.sol[i])}`;
-      const D=l.dc==='D';
-      const row=new Array(22).fill(null);
-      const cta=Number(l.cta); row[0]=Number.isFinite(cta)&&String(cta)===l.cta?cta:l.cta;
-      row[1]=nombreCta(l.cta)||null;
-      row[2]=D?me:null;  row[3]=D?null:me;
-      row[4]=D?loc:null; row[5]=D?null:loc;
-      row[6]=D?me:null;  row[7]=D?null:me;
-      row[8]=l.comentario||null;
-      row[9]=l.cc? (Number.isFinite(Number(l.cc))?Number(l.cc):l.cc) : null;
-      row[10]='N'; row[12]='N'; row[16]='No';
-      if(k.socio){ row[19]=l.doc||null; row[20]=l.socio||null; }
-      if(k.fecha) row[21]=dmyOf(a.fecha);
-      aoa.push(row);
-    });
+    aoa.push(...filasAsiento(a,k));
     if(k.sep && ai<inc.length-1) aoa.push(new Array(22).fill(null));
   });
   return aoa;
+}
+// Texto para pegar en SAP: las líneas del asiento sin encabezado, columnas separadas por tabulador.
+const textoSAP = (a,k) => filasAsiento(a,k).map(r=>r.map(v=>v==null?'':String(v)).join('\t')).join('\r\n');
+async function copiarTexto(t){
+  try{ await navigator.clipboard.writeText(t); return true; }
+  catch(e){
+    const ta=document.createElement('textarea'); ta.value=t;
+    ta.style.cssText='position:fixed;opacity:0;pointer-events:none';
+    document.body.append(ta); ta.select();
+    let ok=false; try{ ok=document.execCommand('copy'); }catch(_){}
+    ta.remove(); return ok;
+  }
 }
 /* Estilos del Excel (xlsx-js-style): solo cambian el aspecto, no los valores que lee SAP. */
 const XS = (()=>{

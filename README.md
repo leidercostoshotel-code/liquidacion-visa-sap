@@ -45,6 +45,14 @@ Los importes en moneda local se redondean a dos decimales. La opción *Ajustar e
 la línea del banco* traslada a esa línea la diferencia de céntimos para que débitos y
 créditos cuadren exactamente.
 
+## Copiar un asiento para pegarlo en SAP
+
+Cada asiento del paso 4 tiene el botón **Copiar**: copia sus líneas sin encabezado, con las
+mismas columnas y valores que la hoja `SAP`, separadas por tabulador como al copiar desde
+Excel. El asiento copiado queda en verde; si después cambia (tipo de cambio, importes,
+cuentas), vuelve a su color normal para indicar que hay que copiarlo de nuevo. El botón se
+desactiva mientras falte el tipo de cambio de esa fecha.
+
 ## Opciones de exportación
 
 - Fila en blanco entre asientos.
