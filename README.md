@@ -77,7 +77,9 @@ firebase login
 firebase deploy --only hosting
 ```
 
-La página queda en https://liquidacion-sap.web.app. Para probar en local antes de publicar:
+La página queda en https://liquidacion-sap.web.app. `firebase.json` fija el sitio `liquidacion-sap`: si la
+CLI apunta a otro proyecto, el deploy falla en lugar de publicar en un sitio ajeno.
+Para ver el proyecto activo: `firebase use`; para corregirlo: `firebase use liquidacion-sap`. Para probar en local antes de publicar:
 `firebase serve --only hosting`.
 
 ---
