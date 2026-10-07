@@ -74,7 +74,18 @@ body{
 .topbar .btn:hover:not(:disabled){border-color:var(--brand-fg)}
 
 /* ---------- encabezado ---------- */
-header.hero{padding-block:30px 24px; max-width:62ch}
+header.hero{
+  padding-block:26px 22px; display:flex; align-items:center; justify-content:space-between;
+  flex-wrap:wrap; gap:18px 32px;
+}
+.hero-txt{flex:1 1 420px; max-width:62ch}
+.hero-logo{
+  flex:0 1 360px; margin:0; background:#f6f0e9; border:1px solid var(--line);
+  border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden;
+}
+/* El GIF trae un filete oscuro de 3 px a cada lado; se recorta sin tocar el archivo. */
+.hero-logo img{display:block; width:100%; height:auto; clip-path:inset(0 3px)}
+@media (max-width:720px){ .hero-logo{order:-1; flex-basis:100%} }
 header.hero h1{
   font-size:clamp(25px,4.6vw,34px); line-height:1.12; letter-spacing:-.025em;
   font-weight:600; margin:0 0 10px; text-wrap:balance;
@@ -275,8 +286,14 @@ const INTERFAZ = `
 
 <div class="wrap">
   <header class="hero">
-    <h1>De la liquidación de tarjetas al asiento de SAP</h1>
-    <p>Cargue el Excel de liquidación, confirme las cuentas y el tipo de cambio, y descargue la pestaña <strong>SAP</strong> lista para importar a SAP Business One.</p>
+    <div class="hero-txt">
+      <h1>De la liquidación de tarjetas al asiento de SAP</h1>
+      <p>Cargue el Excel de liquidación, confirme las cuentas y el tipo de cambio, y descargue la pestaña <strong>SAP</strong> lista para importar a SAP Business One.</p>
+    </div>
+    <picture class="hero-logo">
+      <source srcset="img/logo-swissotel-30.png" media="(prefers-reduced-motion: reduce)">
+      <img src="img/logo-swissotel-30.gif" width="750" height="155" alt="Swissôtel Lima · 30 años">
+    </picture>
   </header>
 
   <!-- PASO 1 -->
@@ -417,7 +434,7 @@ const INTERFAZ = `
   <footer>
     Comisión del asiento = importe bruto − importe neto de la liquidación, que equivale a COMISIÓN TOTAL + COMISIÓN IGV y además absorbe las comisiones devueltas en las operaciones negativas.
     Los importes en soles se calculan al tipo de cambio de la fecha de abono y se redondean a dos decimales.<br>
-    Leider Tisnado Mego · Soluciones Digitales · Versión 3 · Excel con colores
+    Leider Tisnado Mego · Soluciones Digitales · Versión 4 · Logo y favicon
   </footer>
 </div>
 `;

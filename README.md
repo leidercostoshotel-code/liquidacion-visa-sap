@@ -66,6 +66,8 @@ Ningún dato sale del navegador: todo el procesamiento es local.
 firebase.json         configuración de Firebase Hosting (publica la carpeta public/)
 public/index.html     página mínima: carga SheetJS y app.js
 public/app.js         la aplicación completa: estilos, interfaz y lógica
+public/img/           logo animado de Swissôtel Lima 30 años (.gif) y su versión fija (.png)
+public/favicon.ico    íconos de la pestaña (16, 32 y 48 px), más favicon-32.png y apple-touch-icon.png
 ```
 
 ## Publicar en Firebase
