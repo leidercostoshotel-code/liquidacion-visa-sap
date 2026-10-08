@@ -1,0 +1,15 @@
+Bibliotecas de terceros incluidas en esta carpeta, sin modificaciones salvo lo indicado.
+
+xlsx-js-style 1.2.0 (basado en SheetJS 0.18.5)
+  Archivo: xlsx-js-style-1.2.0.bundle.js (dist/xlsx.bundle.js del paquete npm)
+  Licencia: Apache License 2.0 — https://www.apache.org/licenses/LICENSE-2.0
+  Fuente: https://github.com/gitbrent/xlsx-js-style
+
+Firebase JavaScript SDK 12.19.0 (firebase-app y firebase-auth)
+  Archivos: firebase-app-12.19.0.js y firebase-auth-12.19.0.js (paquete npm "firebase")
+  Cambio: firebase-auth importa ./firebase-app-12.19.0.js en lugar de la URL de gstatic.com,
+  para servir ambos archivos desde este sitio.
+  Licencia: Apache License 2.0 — https://www.apache.org/licenses/LICENSE-2.0
+  Fuente: https://github.com/firebase/firebase-js-sdk
+
+En los tres archivos se quitó la línea final "sourceMappingURL" porque los mapas no se publican.

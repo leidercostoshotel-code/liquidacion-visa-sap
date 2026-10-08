@@ -20,9 +20,32 @@ correo escrito, y «Mantener la sesión iniciada» guarda la sesión en ese nave
 Hosting en `/__/firebase/init.json`, por eso el acceso solo funciona publicado en Firebase o
 con `firebase serve`, no abriendo el archivo directamente.
 
-El acceso decide quién usa la aplicación; los archivos estáticos (`app.js`, imágenes) siguen
-siendo públicos, como en cualquier sitio de Hosting. Los datos de la liquidación nunca salen
-del navegador.
+## Seguridad
+
+- **Solo cuentas creadas en Firebase.** La interfaz y la lógica de la aplicación se montan en
+  la página únicamente después de iniciar sesión; antes solo existe la pantalla de acceso.
+- **Sin registro abierto.** Firebase permite, por defecto, que cualquiera cree una cuenta con
+  la clave pública del proyecto. Hay que desactivarlo en la consola: Authentication →
+  Configuración → Acciones del usuario → desmarcar «Habilitar creación (registro)». Si la
+  opción no aparece, está en Google Cloud → Identity Platform → Configuración.
+- **Cierre por inactividad.** La sesión se cierra a los 20 minutos sin uso
+  (`INACTIVIDAD_MIN` en `app.js`), y al salir se recarga la página para borrar los datos.
+- **Sin dependencias de CDN.** La librería de Excel y el SDK de Firebase se sirven desde
+  `public/vendor/` (ver `LICENCIAS.txt`), así que solo se ejecuta código de este sitio.
+- **Cabeceras de seguridad** en `firebase.json`: Content-Security-Policy (`script-src 'self'`,
+  conexiones solo a los servicios de acceso de Google), prohibición de mostrarse dentro de
+  otro sitio (`frame-ancestors 'none'`, `X-Frame-Options`), HSTS, `nosniff` y `noindex` para
+  que los buscadores no la indexen.
+- **Firestore cerrado.** `firestore.rules` niega toda lectura y escritura; se publica con
+  `firebase deploy --only firestore:rules --project liquidacion-sap`.
+- **Los datos de la liquidación nunca salen del navegador**: el Excel se procesa en el equipo
+  del usuario y no se sube a ningún servidor.
+
+Límite a tener en cuenta: un sitio de Firebase Hosting no puede exigir sesión para entregar
+sus archivos, así que `app.js` sigue siendo descargable por quien conozca la dirección (y el
+repositorio de GitHub es público). Lo que contiene es la herramienta y las cuentas contables
+por defecto, no datos de liquidaciones. Para ocultar el código, poner el repositorio como
+privado en GitHub.
 
 ## Qué hace
 
@@ -82,7 +105,7 @@ desactiva mientras falte el tipo de cambio de esa fecha.
 
 ## Tecnología
 
-HTML, CSS y JavaScript sin framework. Dependencias, cargadas desde CDN:
+HTML, CSS y JavaScript sin framework. Dependencias, servidas desde `public/vendor/`:
 [xlsx-js-style](https://github.com/gitbrent/xlsx-js-style) 1.2.0 (SheetJS 0.18.5 con
 soporte de colores y formatos) para leer y escribir el `.xlsx`, y el SDK web de Firebase
 12.19.0 (`firebase-app` y `firebase-auth`) para el acceso.
@@ -92,10 +115,12 @@ Ningún dato sale del navegador: todo el procesamiento es local.
 
 ```
 .firebaserc           proyecto de Firebase por defecto (liquidacion-sap)
-firebase.json         configuración de Firebase Hosting (publica la carpeta public/)
+firebase.json         Firebase Hosting (carpeta public/ y cabeceras de seguridad) y reglas de Firestore
+firestore.rules       reglas de Firestore: niegan todo acceso
 public/index.html     página mínima: carga SheetJS y app.js
 public/app.js         la aplicación completa: estilos, interfaz y lógica
 public/img/           logo animado de Swissôtel Lima 30 años (.gif), su versión fija (.png) y la foto del hotel para el acceso
+public/vendor/        librería de Excel y SDK de Firebase, con sus licencias
 public/favicon.ico    íconos de la pestaña (16, 32 y 48 px), más favicon-32.png y apple-touch-icon.png
 ```
 

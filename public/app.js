@@ -501,7 +501,7 @@ const INTERFAZ = `
   <footer>
     Comisión del asiento = importe bruto − importe neto de la liquidación, que equivale a COMISIÓN TOTAL + COMISIÓN IGV y además absorbe las comisiones devueltas en las operaciones negativas.
     Los importes en soles se calculan al tipo de cambio de la fecha de abono y se redondean a dos decimales.<br>
-    Leider Tisnado Mego · Soluciones Digitales · Versión 7 · Acceso con usuario
+    Leider Tisnado Mego · Soluciones Digitales · Versión 8 · Acceso seguro
   </footer>
 </div>
 `;
@@ -545,12 +545,14 @@ const ACCESO = `
 </div>`;
 
 document.head.appendChild(Object.assign(document.createElement('style'), { textContent: ESTILOS }));
-document.body.innerHTML = INTERFAZ + ACCESO;
+// Al cargar solo existe la pantalla de acceso; la aplicación se monta después de iniciar sesión.
+document.body.innerHTML = ACCESO;
 document.body.dataset.acceso = 'cargando';
 
-/* ---------------- lógica ---------------- */
-(function(){
+/* ---------------- lógica (solo con sesión iniciada) ---------------- */
+function montarApp(){
 "use strict";
+document.body.insertAdjacentHTML('afterbegin', INTERFAZ);
 const $ = s => document.querySelector(s);
 const el = (t,c,x) => { const n=document.createElement(t); if(c) n.className=c; if(x!=null) n.textContent=x; return n; };
 const r2 = n => Math.round((Number(n)||0)*100)/100;
@@ -1290,14 +1292,16 @@ $('#expandAll').addEventListener('click',()=>{
 });
 $('#dl').addEventListener('click',descargar);
 wireCuentaHints();
-})();
+}
 /* ---------------- acceso con Firebase Authentication ---------------- */
 // La configuración la entrega Firebase Hosting en /__/firebase/init.json (no se guarda en el código).
 // Las cuentas se crean en la consola de Firebase → Authentication → Usuarios.
 (function(){
 "use strict";
 const $ = s => document.querySelector(s);
-const SDK = 'https://www.gstatic.com/firebasejs/12.19.0/';
+// SDK servido desde este mismo sitio (public/vendor), sin depender de un CDN externo.
+const SDK = './vendor/';
+const INACTIVIDAD_MIN = 20;   // minutos sin usar la página antes de cerrar la sesión
 const ERRORES = {
   'auth/invalid-credential':'Correo o contraseña incorrectos.',
   'auth/invalid-login-credentials':'Correo o contraseña incorrectos.',
@@ -1327,8 +1331,8 @@ async function iniciar(){
   try{
     const [cfg, appMod, authMod] = await Promise.all([
       fetch('/__/firebase/init.json').then(r => { if(!r.ok) throw new Error('init'); return r.json(); }),
-      import(SDK+'firebase-app.js'),
-      import(SDK+'firebase-auth.js'),
+      import(SDK+'firebase-app-12.19.0.js'),
+      import(SDK+'firebase-auth-12.19.0.js'),
     ]);
     A = authMod;
     auth = A.getAuth(appMod.initializeApp(cfg));
@@ -1340,15 +1344,34 @@ async function iniciar(){
     return;
   }
 
+  let montada = false;
+  const salir = motivo => {
+    try{ if(motivo) sessionStorage.setItem('motivoSalida', motivo); }catch(e){}
+    return A.signOut(auth);
+  };
+  try{
+    if(sessionStorage.getItem('motivoSalida')==='inactividad') msg('Su sesión se cerró por inactividad. Ingrese de nuevo.');
+    sessionStorage.removeItem('motivoSalida');
+  }catch(e){}
+
   A.onAuthStateChanged(auth, u => {
-    document.body.dataset.acceso = u ? 'dentro' : 'fuera';
-    $('#userMail').textContent = u ? (u.email || '') : '';
-    $('#userMail').title = u ? (u.email || '') : '';
     if(!u){
+      // Sesión cerrada (Salir, inactividad, otra pestaña o cuenta desactivada): recargar borra los datos de la pantalla.
+      if(montada){ location.reload(); return; }
+      document.body.dataset.acceso = 'fuera';
       $('#loginCampos').disabled = false;
       boton.textContent = 'Ingresar';
       setTimeout(() => $('#loginEmail').focus(), 0);
+      return;
     }
+    if(!montada){
+      montarApp(); montada = true;
+      $('#salirBtn').addEventListener('click', () => salir());
+      vigilarInactividad(() => salir('inactividad'));
+    }
+    $('#userMail').textContent = u.email || '';
+    $('#userMail').title = u.email || '';
+    document.body.dataset.acceso = 'dentro';
   });
 
   $('#loginForm').addEventListener('submit', async e => {
@@ -1378,9 +1401,17 @@ async function iniciar(){
       msg(err && err.code==='auth/invalid-email' ? ERRORES['auth/invalid-email'] : 'No se pudo enviar el correo. Intente de nuevo.');
     }
   });
+}
 
-  // Al salir se recarga la página para no dejar datos de la liquidación en pantalla.
-  $('#salirBtn').addEventListener('click', async () => { await A.signOut(auth); location.reload(); });
+// Cierra la sesión tras INACTIVIDAD_MIN minutos sin teclado, mouse ni toque. Se compara la hora
+// en lugar de usar un solo temporizador, para que también funcione si el equipo se suspende.
+function vigilarInactividad(alVencer){
+  let ultimo = Date.now();
+  const marcar = () => { ultimo = Date.now(); };
+  ['pointerdown','keydown','wheel','touchstart','scroll'].forEach(ev => addEventListener(ev, marcar, {passive:true, capture:true}));
+  const revisar = () => { if(Date.now() - ultimo > INACTIVIDAD_MIN*60000){ clearInterval(id); alVencer(); } };
+  const id = setInterval(revisar, 30000);
+  document.addEventListener('visibilitychange', () => { if(!document.hidden) revisar(); });
 }
 iniciar();
 })();
