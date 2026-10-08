@@ -4,6 +4,26 @@ Convierte el Excel de liquidación de tarjetas de Izipay en la pestaña **SAP** 
 importar a SAP Business One. Una sola página, sin servidor ni instalación: se publica en
 Firebase Hosting.
 
+## Acceso
+
+La aplicación pide iniciar sesión con correo y contraseña (Firebase Authentication del
+proyecto `liquidacion-sap`). No hay registro público: las cuentas las crea el administrador.
+
+1. Consola de Firebase → **Authentication** → **Método de acceso** → habilitar
+   **Correo electrónico/contraseña** (una sola vez).
+2. **Authentication** → **Usuarios** → **Agregar usuario** con el correo y una contraseña
+   inicial para cada persona.
+
+En la pantalla de acceso, «¿Olvidó su contraseña?» envía un enlace de restablecimiento al
+correo escrito, y «Mantener la sesión iniciada» guarda la sesión en ese navegador. El botón
+**Salir** cierra la sesión y limpia la pantalla. La configuración de Firebase la entrega
+Hosting en `/__/firebase/init.json`, por eso el acceso solo funciona publicado en Firebase o
+con `firebase serve`, no abriendo el archivo directamente.
+
+El acceso decide quién usa la aplicación; los archivos estáticos (`app.js`, imágenes) siguen
+siendo públicos, como en cualquier sitio de Hosting. Los datos de la liquidación nunca salen
+del navegador.
+
 ## Qué hace
 
 1. **Lee el Excel.** Detecta sola la hoja que contiene la columna `COMERCIO/CADENA` y usa
@@ -62,9 +82,10 @@ desactiva mientras falte el tipo de cambio de esa fecha.
 
 ## Tecnología
 
-HTML, CSS y JavaScript sin framework. La única dependencia es
+HTML, CSS y JavaScript sin framework. Dependencias, cargadas desde CDN:
 [xlsx-js-style](https://github.com/gitbrent/xlsx-js-style) 1.2.0 (SheetJS 0.18.5 con
-soporte de colores y formatos), cargada desde CDN, para leer y escribir el `.xlsx`.
+soporte de colores y formatos) para leer y escribir el `.xlsx`, y el SDK web de Firebase
+12.19.0 (`firebase-app` y `firebase-auth`) para el acceso.
 Ningún dato sale del navegador: todo el procesamiento es local.
 
 ## Estructura
@@ -74,7 +95,7 @@ Ningún dato sale del navegador: todo el procesamiento es local.
 firebase.json         configuración de Firebase Hosting (publica la carpeta public/)
 public/index.html     página mínima: carga SheetJS y app.js
 public/app.js         la aplicación completa: estilos, interfaz y lógica
-public/img/           logo animado de Swissôtel Lima 30 años (.gif) y su versión fija (.png)
+public/img/           logo animado de Swissôtel Lima 30 años (.gif), su versión fija (.png) y la foto del hotel para el acceso
 public/favicon.ico    íconos de la pestaña (16, 32 y 48 px), más favicon-32.png y apple-touch-icon.png
 ```
 
