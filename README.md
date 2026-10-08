@@ -16,6 +16,19 @@ El sistema de impresoras guarda el histórico de meses y el maestro de impresora
 navegador (`localStorage`), igual que el archivo original: cada equipo tiene su propio
 histórico; use *Exportar maestro* para respaldarlo o pasarlo a otra PC.
 
+## Agregar un sistema nuevo al menú
+
+1. Crear su carpeta en `public/`, por ejemplo `public/horarios/`, con:
+   - `index.html` mínimo: copiar el de `public/impresoras/` y cambiar el título y su `app.js`.
+     Debe cargar `/comun/acceso.js` al final para tener el mismo inicio de sesión.
+   - `app.js` que defina `window.montarApp = function(){ ... }`: inyecta sus estilos y su
+     interfaz y arranca su lógica. Para tener **← Menú** y **Salir**, incluir en su barra un
+     enlace a `/` y un botón con `id="salirBtn"` (y opcionalmente `<span id="userMail">`).
+2. Añadir una entrada a `SISTEMAS` en `public/menu.js` con nombre, ruta, descripción, color
+   (amarillo, turquesa, rosa, celeste, naranja, morado) e ícono. La tarjeta aparece sola.
+3. Si usa librerías externas, copiarlas a `public/vendor/` (la política de seguridad solo
+   permite scripts del propio sitio).
+
 ## Liquidación VISA → SAP
 
 ## Acceso
