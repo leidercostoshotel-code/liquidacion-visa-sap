@@ -11,7 +11,17 @@ const $ = s => document.querySelector(s);
 const ESTILOS_ACCESO = `
 .login, .login *{box-sizing:border-box}
 .login h1, .login h2, .login p{font-family:inherit}
-body[data-acceso="dentro"] .login{display:none}
+body[data-acceso="dentro"] .login, body[data-acceso="cargando"] .login{display:none}
+/* Mientras Firebase confirma la sesión se muestra solo una pantalla de carga; el acceso
+   aparece únicamente si no hay sesión. Así, al pasar del menú a un sistema no parpadea. */
+.acceso-carga{position:fixed; inset:0; z-index:101; display:none; place-items:center; background:#f3f5f8}
+body[data-acceso="cargando"] .acceso-carga{display:grid}
+.acceso-carga span{
+  width:34px; height:34px; border-radius:50%; border:3px solid #d6dde6; border-top-color:#0b4f9c;
+  animation:acceso-gira .8s linear infinite;
+}
+@keyframes acceso-gira{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){ .acceso-carga span{animation:none} }
 .login{
   position:fixed; inset:0; z-index:100; overflow:auto;
   display:grid; grid-template-columns:minmax(0,1fr) minmax(320px,460px); align-items:center;
@@ -73,8 +83,8 @@ const ACCESO = `
 <div class="login" id="login">
   <section class="login-hero">
     <p class="kicker">Swissôtel Lima · Contabilidad</p>
-    <h2>Liquidación VISA → SAP</h2>
-    <p>Convierta la liquidación de tarjetas de Izipay en asientos listos para SAP Business One, en minutos.</p>
+    <h2>Sistemas contables</h2>
+    <p>Liquidación VISA → SAP y Alquiler de Impresoras, en un solo lugar.</p>
   </section>
   <main class="login-card">
     <picture class="login-logo">
@@ -107,7 +117,7 @@ const ACCESO = `
 </div>`;
 
 document.head.appendChild(Object.assign(document.createElement('style'), { textContent: ESTILOS_ACCESO }));
-document.body.insertAdjacentHTML('beforeend', ACCESO);
+document.body.insertAdjacentHTML('beforeend', ACCESO + '<div class="acceso-carga" role="status" aria-label="Cargando"><span></span></div>');
 document.body.dataset.acceso = 'cargando';
 
 // SDK servido desde este mismo sitio (public/vendor), sin depender de un CDN externo.

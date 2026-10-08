@@ -78,7 +78,7 @@ const MENU = `
       <span class="ir">Ingresar →</span>
     </a>
   </nav>
-  <p class="m-pie">Leider Tisnado Mego · Soluciones Digitales · Versión 10</p>
+  <p class="m-pie">Leider Tisnado Mego · Soluciones Digitales · Versión 11</p>
 </main>
 `;
 
