@@ -275,6 +275,8 @@ tr.tot td{background:var(--surface-2); font-weight:600}
 #status.ok{color:var(--ok)} #status.bad{color:var(--crit)}
 
 footer{margin-top:26px; font-size:11.5px; color:var(--fg-faint); line-height:1.6}
+footer a{color:var(--accent); text-decoration:none}
+footer a:hover{text-decoration:underline}
 @media (prefers-reduced-motion: reduce){*{transition:none!important; animation:none!important}}
 .userchip{font-size:12px; color:var(--brand-dim); max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
 .topbar a.btn{text-decoration:none; display:inline-flex; align-items:center}
@@ -444,7 +446,7 @@ const INTERFAZ = `
   <footer>
     Comisión del asiento = importe bruto − importe neto de la liquidación, que equivale a COMISIÓN TOTAL + COMISIÓN IGV y además absorbe las comisiones devueltas en las operaciones negativas.
     Los importes en soles se calculan al tipo de cambio de la fecha de abono y se redondean a dos decimales.<br>
-    Leider Tisnado Mego · Soluciones Digitales · Versión 13 · Menú de sistemas
+    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 14 · Menú de sistemas
   </footer>
 </div>
 `;
