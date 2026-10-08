@@ -280,33 +280,24 @@ body:not([data-acceso="dentro"]) .topbar, body:not([data-acceso="dentro"]) .wrap
 body[data-acceso="dentro"] .login{display:none}
 .login{
   position:fixed; inset:0; z-index:100; overflow:auto;
-  display:grid; place-items:center; padding:32px 20px;
-  background:
-    radial-gradient(circle at 12% 18%, rgba(255,255,255,.14), transparent 38%),
-    radial-gradient(circle at 88% 85%, rgba(91,155,230,.40), transparent 45%),
-    linear-gradient(135deg, #0b2e59 0%, #134a8e 55%, #1d6fc4 100%);
+  display:grid; grid-template-columns:minmax(0,1fr) minmax(320px,460px); align-items:center;
+  background:#0b2e59 url(img/hotel.jpg) center/cover no-repeat;
   font-family:var(--sans); color:#1a2533;
 }
-/* Tarjeta delimitada: formulario a la izquierda, foto del hotel a la derecha. */
-.login-box{
-  width:min(980px,100%); min-height:580px; display:grid; grid-template-columns:1fr 1.08fr;
-  background:#fff; border-radius:18px; overflow:hidden;
-  box-shadow:0 30px 80px -24px rgba(0,0,0,.6), 0 2px 8px rgba(0,0,0,.15);
+.login::before{
+  content:""; position:fixed; inset:0;
+  background:linear-gradient(105deg, rgba(6,22,46,.86) 0%, rgba(6,22,46,.55) 52%, rgba(6,22,46,.72) 100%);
 }
-.login-card{padding:40px 44px 26px; display:flex; flex-direction:column; justify-content:center; min-width:0}
-.login-foto{
-  position:relative; display:flex; align-items:flex-end; color:#fff;
-  background:#0b2e59 url(img/hotel.jpg) center/cover no-repeat;
+.login-hero{position:relative; align-self:end; padding:0 48px 56px; color:#fff; max-width:620px}
+.login-hero .kicker{font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#c9d6e8; margin:0 0 10px}
+.login-hero h2{font-size:clamp(26px,3.4vw,40px); line-height:1.12; letter-spacing:-.02em; font-weight:600; margin:0 0 12px; text-wrap:balance}
+.login-hero p{margin:0; color:#dbe4f0; font-size:15px; max-width:46ch}
+.login-card{
+  position:relative; margin:32px 40px 32px 0; padding:28px 28px 22px;
+  background:rgba(255,255,255,.97); border-radius:16px;
+  box-shadow:0 24px 60px -20px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.12);
 }
-.login-foto::before{
-  content:""; position:absolute; inset:0;
-  background:linear-gradient(180deg, rgba(11,46,89,.10) 0%, rgba(11,46,89,.35) 45%, rgba(8,28,56,.92) 100%);
-}
-.login-foto .txt{position:relative; padding:34px 36px}
-.login-foto .kicker{font-size:11.5px; letter-spacing:.18em; text-transform:uppercase; color:#c9d6e8; margin:0 0 8px}
-.login-foto h2{font-size:clamp(24px,2.8vw,32px); line-height:1.15; letter-spacing:-.02em; font-weight:600; margin:0 0 10px}
-.login-foto p{margin:0; color:#dbe4f0; font-size:14.5px; max-width:40ch}
-.login-logo{display:block; margin:0 0 24px; background:#f6f0e9; border-radius:10px; overflow:hidden; border:1px solid #e7ddd1}
+.login-logo{display:block; margin:0 0 22px; background:#f6f0e9; border-radius:10px; overflow:hidden; border:1px solid #e7ddd1}
 .login-logo img{display:block; width:100%; height:auto; clip-path:inset(0 3px)}
 .login-card h1{font-size:24px; letter-spacing:-.02em; font-weight:600; margin:0 0 4px}
 .login-card .sub{margin:0 0 20px; color:#4f5d6e; font-size:14px}
@@ -339,13 +330,10 @@ body[data-acceso="dentro"] .login{display:none}
 .login-msg.ok{color:#17764a}
 .login-pie{margin:16px 0 0; padding-top:14px; border-top:1px solid #e6eaef; font-size:11.5px; color:#7d8a9a; text-align:center}
 .userchip{font-size:12px; color:var(--brand-dim); max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
-@media (max-width:760px){
-  .login{padding:16px; place-items:start center}
-  .login-box{grid-template-columns:1fr; min-height:0}
-  .login-foto{order:-1; min-height:150px}
-  .login-foto .txt{padding:18px 20px}
-  .login-foto p{display:none}
-  .login-card{padding:24px 20px 18px}
+@media (max-width:860px){
+  .login{grid-template-columns:1fr; align-items:start}
+  .login-hero{display:none}
+  .login-card{margin:24px 16px; padding:22px 18px 18px}
   .userchip{display:none}
 }
 `;
@@ -513,7 +501,7 @@ const INTERFAZ = `
   <footer>
     Comisión del asiento = importe bruto − importe neto de la liquidación, que equivale a COMISIÓN TOTAL + COMISIÓN IGV y además absorbe las comisiones devueltas en las operaciones negativas.
     Los importes en soles se calculan al tipo de cambio de la fecha de abono y se redondean a dos decimales.<br>
-    Leider Tisnado Mego · Soluciones Digitales · Versión 9 · Nuevo diseño de acceso
+    Leider Tisnado Mego · Soluciones Digitales · Versión 8 · Acceso seguro
   </footer>
 </div>
 `;
@@ -521,7 +509,11 @@ const INTERFAZ = `
 /* ---------------- pantalla de acceso ---------------- */
 const ACCESO = `
 <div class="login" id="login">
- <div class="login-box">
+  <section class="login-hero">
+    <p class="kicker">Swissôtel Lima · Contabilidad</p>
+    <h2>Liquidación VISA → SAP</h2>
+    <p>Convierta la liquidación de tarjetas de Izipay en asientos listos para SAP Business One, en minutos.</p>
+  </section>
   <main class="login-card">
     <picture class="login-logo">
       <source srcset="img/logo-swissotel-30.png" media="(prefers-reduced-motion: reduce)">
@@ -550,14 +542,6 @@ const ACCESO = `
     </form>
     <p class="login-pie">Acceso restringido al personal autorizado.</p>
   </main>
-  <aside class="login-foto">
-    <div class="txt">
-      <p class="kicker">Swissôtel Lima · Contabilidad</p>
-      <h2>Liquidación VISA → SAP</h2>
-      <p>Convierta la liquidación de tarjetas de Izipay en asientos listos para SAP Business One, en minutos.</p>
-    </div>
-  </aside>
- </div>
 </div>`;
 
 document.head.appendChild(Object.assign(document.createElement('style'), { textContent: ESTILOS }));
