@@ -97,7 +97,6 @@ const MENU = `
 </div>
 <main class="m-main">
   <picture class="m-logo">
-    <source srcset="/img/logo-swissotel-30.png" media="(prefers-reduced-motion: reduce)">
     <img src="/img/logo-swissotel-30.gif" width="750" height="155" alt="Swissôtel Lima · 30 años">
   </picture>
   <p class="m-kicker">Swissôtel Lima</p>
@@ -105,7 +104,7 @@ const MENU = `
   <p class="m-sub">Elige a qué sistema quieres entrar.</p>
   <nav class="m-grid" aria-label="Sistemas">${SISTEMAS.map(tarjeta).join('')}
   </nav>
-  <p class="m-pie">Leider Tisnado Mego · Soluciones Digitales · Versión 12</p>
+  <p class="m-pie">Leider Tisnado Mego · Soluciones Digitales · Versión 13</p>
 </main>
 `;
 
