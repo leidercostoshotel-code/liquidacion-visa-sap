@@ -171,4 +171,4 @@ Para ver el proyecto activo: `firebase use`; para corregirlo: `firebase use liqu
 
 ---
 
-Leider Tisnado Mego · Soluciones Digitales
+Powered by [leidertisnado.com](https://leidertisnado.com/)

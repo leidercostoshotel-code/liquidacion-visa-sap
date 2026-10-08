@@ -73,6 +73,8 @@ body::before{
 .m-card p{margin:0; color:#b8c7dc; font-size:15px; flex:1}
 .m-card .ir{margin-top:8px; font-weight:700; font-size:13px; letter-spacing:.2em; text-transform:uppercase; color:var(--c)}
 .m-pie{position:relative; z-index:1; margin:44px 0 0; font-size:11.5px; color:#8ea3bd}
+.m-pie a{color:#cfe0f5; text-decoration:none; border-bottom:1px solid rgba(207,224,245,.35)}
+.m-pie a:hover{color:#fff; border-bottom-color:#fff}
 @media (max-width:640px){
   .m-main{padding-top:68px}
   .m-card{flex-basis:100%; padding:26px 24px 24px}
@@ -104,7 +106,7 @@ const MENU = `
   <p class="m-sub">Elige a qué sistema quieres entrar.</p>
   <nav class="m-grid" aria-label="Sistemas">${SISTEMAS.map(tarjeta).join('')}
   </nav>
-  <p class="m-pie">Leider Tisnado Mego · Soluciones Digitales · Versión 13</p>
+  <p class="m-pie">Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 14</p>
 </main>
 `;
 
