@@ -13,3 +13,8 @@ Firebase JavaScript SDK 12.19.0 (firebase-app y firebase-auth)
   Fuente: https://github.com/firebase/firebase-js-sdk
 
 En los tres archivos se quitó la línea final "sourceMappingURL" porque los mapas no se publican.
+
+PDF.js 3.11.174 (Mozilla, paquete npm "pdfjs-dist")
+  Archivos: pdf-3.11.174.min.js y pdf.worker-3.11.174.min.js (build/pdf.min.js y build/pdf.worker.min.js)
+  Licencia: Apache License 2.0 — https://www.apache.org/licenses/LICENSE-2.0
+  Fuente: https://github.com/mozilla/pdf.js

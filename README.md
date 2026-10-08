@@ -1,8 +1,22 @@
-# Liquidación VISA → SAP
+# Sistemas contables · Swissôtel Lima
 
-Convierte el Excel de liquidación de tarjetas de Izipay en la pestaña **SAP** lista para
-importar a SAP Business One. Una sola página, sin servidor ni instalación: se publica en
-Firebase Hosting.
+Sitio en Firebase Hosting con inicio de sesión y un menú para elegir el sistema:
+
+| Ruta | Sistema |
+| --- | --- |
+| `/` | Acceso y menú de sistemas |
+| `/liquidacion/` | **Liquidación VISA → SAP**: convierte el Excel de liquidación de tarjetas de Izipay en la pestaña SAP lista para importar a SAP Business One |
+| `/impresoras/` | **Alquiler de Impresoras**: cuadro de consumo Reprodata (creado por Olinda Orellana). Importa el PDF mensual del proveedor, valida los contadores contra el mes anterior, mantiene el maestro de impresoras y genera el asiento SAP |
+
+Todas las páginas comparten el acceso (`public/comun/acceso.js`): sin sesión muestran la
+pantalla de inicio de sesión y, al entrar, montan su sistema. Los botones **Menú** y **Salir**
+están en la barra superior de cada sistema.
+
+El sistema de impresoras guarda el histórico de meses y el maestro de impresoras en el
+navegador (`localStorage`), igual que el archivo original: cada equipo tiene su propio
+histórico; use *Exportar maestro* para respaldarlo o pasarlo a otra PC.
+
+## Liquidación VISA → SAP
 
 ## Acceso
 
@@ -29,7 +43,7 @@ con `firebase serve`, no abriendo el archivo directamente.
   Configuración → Acciones del usuario → desmarcar «Habilitar creación (registro)». Si la
   opción no aparece, está en Google Cloud → Identity Platform → Configuración.
 - **Cierre por inactividad.** La sesión se cierra a los 20 minutos sin uso
-  (`INACTIVIDAD_MIN` en `app.js`), y al salir se recarga la página para borrar los datos.
+  (`INACTIVIDAD_MIN` en `comun/acceso.js`), y al salir se recarga la página para borrar los datos.
 - **Sin dependencias de CDN.** La librería de Excel y el SDK de Firebase se sirven desde
   `public/vendor/` (ver `LICENCIAS.txt`), así que solo se ejecuta código de este sitio.
 - **Cabeceras de seguridad** en `firebase.json`: Content-Security-Policy (`script-src 'self'`,
@@ -42,10 +56,11 @@ con `firebase serve`, no abriendo el archivo directamente.
   del usuario y no se sube a ningún servidor.
 
 Límite a tener en cuenta: un sitio de Firebase Hosting no puede exigir sesión para entregar
-sus archivos, así que `app.js` sigue siendo descargable por quien conozca la dirección (y el
-repositorio de GitHub es público). Lo que contiene es la herramienta y las cuentas contables
-por defecto, no datos de liquidaciones. Para ocultar el código, poner el repositorio como
-privado en GitHub.
+sus archivos, así que el código de los sistemas sigue siendo descargable por quien conozca la dirección (y el
+repositorio de GitHub es público). Lo que contiene es la herramienta, las cuentas contables
+por defecto y, en el sistema de impresoras, el maestro original (ubicaciones, IP internas,
+cuentas y centros de costo); no contiene datos de liquidaciones ni PDFs. Para ocultar el
+código, poner el repositorio como privado en GitHub.
 
 ## Qué hace
 
@@ -117,10 +132,13 @@ Ningún dato sale del navegador: todo el procesamiento es local.
 .firebaserc           proyecto de Firebase por defecto (liquidacion-sap)
 firebase.json         Firebase Hosting (carpeta public/ y cabeceras de seguridad) y reglas de Firestore
 firestore.rules       reglas de Firestore: niegan todo acceso
-public/index.html     página mínima: carga SheetJS y app.js
-public/app.js         la aplicación completa: estilos, interfaz y lógica
+public/index.html     menú de sistemas (página mínima, carga menu.js y el acceso)
+public/menu.js        estilos y tarjetas del menú
+public/comun/acceso.js  inicio de sesión, cierre por inactividad y salida, compartidos
+public/liquidacion/   Liquidación VISA → SAP: index.html mínimo y app.js con estilos, interfaz y lógica
+public/impresoras/    Alquiler de Impresoras: index.html mínimo y app.js con estilos, interfaz y lógica
 public/img/           logo animado de Swissôtel Lima 30 años (.gif), su versión fija (.png) y la foto del hotel para el acceso
-public/vendor/        librería de Excel y SDK de Firebase, con sus licencias
+public/vendor/        librería de Excel, PDF.js y SDK de Firebase, con sus licencias
 public/favicon.ico    íconos de la pestaña (16, 32 y 48 px), más favicon-32.png y apple-touch-icon.png
 ```
 
