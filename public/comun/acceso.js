@@ -88,7 +88,6 @@ const ACCESO = `
   </section>
   <main class="login-card">
     <picture class="login-logo">
-      <source srcset="/img/logo-swissotel-30.png" media="(prefers-reduced-motion: reduce)">
       <img src="/img/logo-swissotel-30.gif" width="750" height="155" alt="Swissôtel Lima · 30 años">
     </picture>
     <h1>Bienvenido nuevamente</h1>

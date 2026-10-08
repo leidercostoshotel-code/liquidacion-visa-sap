@@ -302,7 +302,6 @@ const INTERFAZ = `
       <p>Cargue el Excel de liquidación, confirme las cuentas y el tipo de cambio, y descargue la pestaña <strong>SAP</strong> lista para importar a SAP Business One.</p>
     </div>
     <picture class="hero-logo">
-      <source srcset="/img/logo-swissotel-30.png" media="(prefers-reduced-motion: reduce)">
       <img src="/img/logo-swissotel-30.gif" width="750" height="155" alt="Swissôtel Lima · 30 años">
     </picture>
   </header>
@@ -445,7 +444,7 @@ const INTERFAZ = `
   <footer>
     Comisión del asiento = importe bruto − importe neto de la liquidación, que equivale a COMISIÓN TOTAL + COMISIÓN IGV y además absorbe las comisiones devueltas en las operaciones negativas.
     Los importes en soles se calculan al tipo de cambio de la fecha de abono y se redondean a dos decimales.<br>
-    Leider Tisnado Mego · Soluciones Digitales · Versión 12 · Menú de sistemas
+    Leider Tisnado Mego · Soluciones Digitales · Versión 13 · Menú de sistemas
   </footer>
 </div>
 `;

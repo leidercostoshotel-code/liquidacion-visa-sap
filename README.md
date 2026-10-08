@@ -150,7 +150,7 @@ public/menu.js        estilos y tarjetas del menú
 public/comun/acceso.js  inicio de sesión, cierre por inactividad y salida, compartidos
 public/liquidacion/   Liquidación VISA → SAP: index.html mínimo y app.js con estilos, interfaz y lógica
 public/impresoras/    Alquiler de Impresoras: index.html mínimo y app.js con estilos, interfaz y lógica
-public/img/           logo animado de Swissôtel Lima 30 años (.gif), su versión fija (.png) y la foto del hotel para el acceso
+public/img/           logo animado de Swissôtel Lima 30 años (.gif) y la foto del hotel
 public/vendor/        librería de Excel, PDF.js y SDK de Firebase, con sus licencias
 public/favicon.ico    íconos de la pestaña (16, 32 y 48 px), más favicon-32.png y apple-touch-icon.png
 ```
