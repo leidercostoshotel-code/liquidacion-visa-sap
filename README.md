@@ -169,6 +169,31 @@ CLI apunta a otro proyecto, el deploy falla en lugar de publicar en un sitio aje
 Para ver el proyecto activo: `firebase use`; para corregirlo: `firebase use liquidacion-sap`. Para probar en local antes de publicar:
 `firebase serve --only hosting`.
 
+### Publicación automática (GitHub Actions)
+
+`.github/workflows/publicar.yml` publica el sitio cada vez que se fusiona un cambio en `main`, sin pasar por
+Cloud Shell. También se puede lanzar a mano: pestaña **Actions** → «Publicar en Firebase» → **Run workflow**.
+
+Se configura una sola vez:
+
+1. En Cloud Shell, crear una cuenta de servicio que solo puede publicar el sitio y descargar su clave:
+
+   ```
+   P=liquidacion-sap; SA=github-publicar@$P.iam.gserviceaccount.com
+   gcloud iam service-accounts create github-publicar --display-name="GitHub: publicar Hosting" --project $P
+   gcloud projects add-iam-policy-binding $P --member="serviceAccount:$SA" --role=roles/firebasehosting.admin --condition=None
+   gcloud projects add-iam-policy-binding $P --member="serviceAccount:$SA" --role=roles/serviceusage.serviceUsageConsumer --condition=None
+   gcloud iam service-accounts keys create ~/clave-github.json --iam-account=$SA
+   cat ~/clave-github.json
+   ```
+
+2. En GitHub: **Settings → Secrets and variables → Actions → New repository secret**.
+   Nombre: `FIREBASE_SERVICE_ACCOUNT_LIQUIDACION_SAP`; valor: todo el contenido de `clave-github.json`.
+3. Borrar la clave de Cloud Shell: `rm ~/clave-github.json`.
+
+Mientras falte el secreto, la publicación automática no hace nada y solo deja un aviso en Actions.
+La cuenta de servicio no puede leer usuarios ni datos: solo publicar en Hosting.
+
 ---
 
 Powered by [leidertisnado.com](https://leidertisnado.com/)
