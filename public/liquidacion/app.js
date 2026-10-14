@@ -391,10 +391,6 @@ const INTERFAZ = `
             <b>Ajustar el redondeo en la línea del banco<i>Garantiza que débitos y créditos cuadren al céntimo en soles.</i></b></label>
           <label class="check"><input type="checkbox" id="optSep" checked>
             <b>Fila en blanco entre asientos<i>Separa cada liquidación, igual que en su hoja de trabajo.</i></b></label>
-          <label class="check"><input type="checkbox" id="optSocio">
-            <b>Separar socio de negocios y documento<i>Llena las columnas Socio Negocios y Tipo doc. - Serie - Numero.</i></b></label>
-          <label class="check"><input type="checkbox" id="optFecha">
-            <b>Llenar Fecha Registro Ventas<i>Usa la fecha de abono en formato DD/MM/AAAA.</i></b></label>
         </div>
       </fieldset>
     </div>
@@ -446,7 +442,7 @@ const INTERFAZ = `
   <footer>
     Comisión del asiento = importe bruto − importe neto de la liquidación, que equivale a COMISIÓN TOTAL + COMISIÓN IGV y además absorbe las comisiones devueltas en las operaciones negativas.
     Los importes en soles se calculan al tipo de cambio de la fecha de abono y se redondean a dos decimales.<br>
-    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 14 · Menú de sistemas
+    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 15 · Menú de sistemas
   </footer>
 </div>
 `;
@@ -572,14 +568,7 @@ function parseCatalogo(rows){
 }
 const nombreCta = code => S.catalogo[String(code||'').trim()] || '';
 
-/* ---------------- etiquetas: socio y documento ---------------- */
-const RX_DOC = /\b(\d{2}-)?([A-Z]{1,2}\d{3,4})-?(\d{3,})\b/;
-function partirEtiqueta(t){
-  const s=(t||'').trim();
-  const m=s.match(RX_DOC);
-  if(!m) return {socio:s, doc:''};
-  return {socio:s.slice(0,m.index).replace(/[-–\s]+$/,'').trim(), doc:m[0].trim()};
-}
+/* ---------------- etiquetas ---------------- */
 const esAnticipo = t => /ANTICIPO/i.test(t||'');
 
 /* ---------------- construir asientos ---------------- */
@@ -590,7 +579,6 @@ function cfg(){
     pfME:$('#pfME').value.trim(), pfLoc:$('#pfLoc').value.trim(),
     cc:$('#ccCom').value.trim(), glosa:$('#glosa').value,
     round:$('#optRound').checked, sep:$('#optSep').checked,
-    socio:$('#optSocio').checked, fecha:$('#optFecha').checked,
   };
 }
 function buildAsientos(){
@@ -612,12 +600,10 @@ function buildAsientos(){
       else map.set(key, {...l});
     }
     const lineas=[];
-    for(const l of map.values()){
-      const p = partirEtiqueta(l.comentario===k.glosa ? '' : l.comentario);
-      lineas.push({rol:'credito', dc:'C', cta:l.cta, me:r2(l.me), comentario:l.comentario, cc:'', socio:p.socio, doc:p.doc});
-    }
-    if(g.comision!==0) lineas.push({rol:'comision', dc:'D', cta:k.comision, me:r2(g.comision), comentario:k.glosa, cc:k.cc, socio:'', doc:''});
-    lineas.push({rol:'banco', dc:'D', cta:k.banco, me:r2(g.neto), comentario:k.glosa, cc:'', socio:'', doc:''});
+    for(const l of map.values())
+      lineas.push({rol:'credito', dc:'C', cta:l.cta, me:r2(l.me), comentario:l.comentario, cc:''});
+    if(g.comision!==0) lineas.push({rol:'comision', dc:'D', cta:k.comision, me:r2(g.comision), comentario:k.glosa, cc:k.cc});
+    lineas.push({rol:'banco', dc:'D', cta:k.banco, me:r2(g.neto), comentario:k.glosa, cc:''});
     return {id:gi+1, comercio:g.comercio, fecha:g.fecha, iso:g.iso, tc,
             nTrx:g.trx.length, bruto:g.bruto, comision:g.comision, neto:g.neto,
             refCom:g.refCom, devolucion:g.devolucion,
@@ -689,7 +675,7 @@ function wireCuentaHints(){
     upd();
   });
   ['#pfME','#pfLoc','#ccCom','#glosa'].forEach(s=>$(s).addEventListener('input',rebuild));
-  ['#optRound','#optSep','#optSocio','#optFecha'].forEach(s=>$(s).addEventListener('change',()=>{ renderAsientos(); renderSum4(); }));
+  ['#optRound','#optSep'].forEach(s=>$(s).addEventListener('change',()=>{ renderAsientos(); renderSum4(); }));
 }
 
 /* ---------------- render: paso 3 ---------------- */
@@ -800,7 +786,6 @@ function renderAsientos(){
     const sc=el('div','tscroll'); const tb=el('table');
     const thead=el('thead'); const hr=el('tr');
     const cols=['Cuenta','Nombre de cuenta','','Débito '+k.pfME,'Crédito '+k.pfME,'Débito '+k.pfLoc,'Crédito '+k.pfLoc,'Comentarios','C. Costo'];
-    if(k.socio) cols.push('Socio Negocios','Tipo doc. - Serie - Numero');
     cols.forEach((c,i)=>{ const th=el('th',(i>=3&&i<=6)?'num':null,c); hr.append(th); });
     thead.append(hr); tb.append(thead);
     const tbody=el('tbody');
@@ -841,21 +826,12 @@ function renderAsientos(){
       iCC.setAttribute('aria-label','Centro de costo');
       iCC.addEventListener('input',()=>{ l.cc=iCC.value.trim(); });
       tdCC.append(iCC); tr.append(tdCC);
-      if(k.socio){
-        const tdS=el('td'); const iS=el('input'); iS.type='text'; iS.className='w-txt'; iS.value=l.socio;
-        iS.style.fontFamily='var(--sans)'; iS.setAttribute('aria-label','Socio de negocios');
-        iS.addEventListener('input',()=>{ l.socio=iS.value; }); tdS.append(iS); tr.append(tdS);
-        const tdD=el('td'); const iD=el('input'); iD.type='text'; iD.className='w-cta'; iD.value=l.doc;
-        iD.setAttribute('aria-label','Tipo doc serie numero');
-        iD.addEventListener('input',()=>{ l.doc=iD.value.trim(); }); tdD.append(iD); tr.append(tdD);
-      }
       tbody.append(tr);
     });
     const tr=el('tr','tot');
     tr.append(el('td'),el('td','', 'Totales'),el('td'));
     tr.append(el('td','num',money(q.dME)),el('td','num',money(q.cME)),el('td','num',money(q.dS)),el('td','num',money(q.cS)));
     tr.append(el('td','', a.tc? `TC ${Number(a.tc).toFixed(4)}` : 'sin tipo de cambio'), el('td'));
-    if(k.socio){ tr.append(el('td'),el('td')); }
     tbody.append(tr);
     tb.append(tbody); sc.append(tb); body.append(sc);
 
@@ -868,14 +844,17 @@ function renderAsientos(){
 }
 
 /* ---------------- exportar ---------------- */
-const HDR = ['Cuenta de mayor/Código SN','Cuenta de mayor/Nombre SN','Débito (ME)','Crédito (ME)','Débito','Crédito','Débito (MS)','Crédito (MS)','Comentarios','Centro de Costo','Bloqueo de pago','Motivo del bloqueo','Ejecución de orden de pago','Cuenta destino','Cuenta patrimonial','Comp. destino','Procesado DC','Info socio de negocios','Info de terceros','Tipo doc. - Serie - Numero','Socio Negocios','Fecha Registro Ventas'];
+// Columnas del asiento en SAP, hasta «Posición del formulario principal».
+const HDR = ['Cuenta de mayor/Código SN','Cuenta de mayor/Nombre SN','Débito (ME)','Crédito (ME)','Débito','Crédito','Débito (MS)','Crédito (MS)','Comentarios','Centro de Costo','Posición del formulario principal'];
+const NCOL = HDR.length;
+const POSICION = 'Pagos de facturas de clientes';
 
 function filasAsiento(a,k){
   const q=cuadre(a);
   return a.lineas.map((l,i)=>{
     const me=`${k.pfME} ${money(l.me)}`, loc=`${k.pfLoc} ${money(q.sol[i])}`;
     const D=l.dc==='D';
-    const row=new Array(22).fill(null);
+    const row=new Array(NCOL).fill(null);
     const cta=Number(l.cta); row[0]=Number.isFinite(cta)&&String(cta)===l.cta?cta:l.cta;
     row[1]=nombreCta(l.cta)||null;
     row[2]=D?me:null;  row[3]=D?null:me;
@@ -883,19 +862,17 @@ function filasAsiento(a,k){
     row[6]=D?me:null;  row[7]=D?null:me;
     row[8]=l.comentario||null;
     row[9]=l.cc? (Number.isFinite(Number(l.cc))?Number(l.cc):l.cc) : null;
-    row[10]='N'; row[12]='N'; row[16]='No';
-    if(k.socio){ row[19]=l.doc||null; row[20]=l.socio||null; }
-    if(k.fecha) row[21]=dmyOf(a.fecha);
+    row[10]=POSICION;
     return row;
   });
 }
 function buildAOA(){
   const k=cfg();
-  const aoa=[ new Array(22).fill(null), HDR.slice() ];
+  const aoa=[ new Array(NCOL).fill(null), HDR.slice() ];
   const inc=S.asientos.filter(a=>a.incluir);
   inc.forEach((a,ai)=>{
     aoa.push(...filasAsiento(a,k));
-    if(k.sep && ai<inc.length-1) aoa.push(new Array(22).fill(null));
+    if(k.sep && ai<inc.length-1) aoa.push(new Array(NCOL).fill(null));
   });
   return aoa;
 }
@@ -934,22 +911,22 @@ const serialExcel = f => (Date.UTC(f.y,f.m-1,f.d) - Date.UTC(1899,11,30)) / 8640
 function hojaSAP(){
   const k=cfg();
   const ws=XLSX.utils.aoa_to_sheet(buildAOA());
-  ws['!cols']=[{wch:14},{wch:34},{wch:14},{wch:14},{wch:15},{wch:15},{wch:14},{wch:14},{wch:46},{wch:13},{wch:14},{wch:16},{wch:24},{wch:14},{wch:16},{wch:13},{wch:12},{wch:19},{wch:16},{wch:24},{wch:30},{wch:19}];
+  ws['!cols']=[{wch:14},{wch:34},{wch:14},{wch:14},{wch:15},{wch:15},{wch:14},{wch:14},{wch:46},{wch:13},{wch:30}];
   ws['!rows']=[]; ws['!rows'][1]={hpt:30};
-  for(let c=0;c<22;c++) ws[celda(1,c)].s=XS.encabezado;
+  for(let c=0;c<NCOL;c++) ws[celda(1,c)].s=XS.encabezado;
   // Cada asiento con su propio color de banda; las filas de separación quedan vacías.
   const inc=S.asientos.filter(a=>a.incluir);
   let r=2;
   inc.forEach((a,ai)=>{
     const fill={fgColor:{rgb:XS.banda[ai%2]}};
-    for(let n=0;n<a.lineas.length;n++,r++) for(let c=0;c<22;c++){
+    for(let n=0;n<a.lineas.length;n++,r++) for(let c=0;c<NCOL;c++){
       const ref=celda(r,c);
       if(!ws[ref]) ws[ref]={t:'s',v:''};
       const deb=c===2||c===4||c===6, cre=c===3||c===5||c===7;
       ws[ref].s={
         fill, border:XS.borde('D6DDE6'),
         font:XS.fuente({bold:c===0, color:{rgb: deb?XS.debito : cre?XS.credito : '1A2533'}}),
-        alignment:{horizontal: deb||cre ? 'right' : (c>=10&&c<=16 ? 'center' : 'left'), vertical:'center'},
+        alignment:{horizontal: deb||cre ? 'right' : 'left', vertical:'center'},
       };
     }
     if(k.sep) r++;

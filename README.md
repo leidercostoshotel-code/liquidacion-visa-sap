@@ -85,7 +85,10 @@ código, poner el repositorio como privado en GitHub.
    con su centro de costo y débito del neto a la cuenta del banco.
 4. **Convierte a moneda local** con un tipo de cambio por cada fecha de abono.
 5. **Exporta** un `.xlsx` con dos hojas:
-   - `SAP`: las 22 columnas para importar, importes como texto con prefijo de moneda
+   - `SAP`: las columnas del asiento de SAP hasta «Posición del formulario principal»
+     (Cuenta, Nombre, Débito/Crédito en ME, local y MS, Comentarios, Centro de Costo y
+     Posición del formulario principal, siempre «Pagos de facturas de clientes»). Importes
+     como texto con prefijo de moneda
      (`USD 990.00`, `SOL 3,514.50`). Encabezado azul, cada asiento en su propio color de
      banda, débitos en azul y créditos en morado. Los estilos no cambian ningún valor.
    - `Resumen`: un asiento por fila con número, fecha de abono en formato de fecha,
@@ -127,8 +130,6 @@ desactiva mientras falte el tipo de cambio de esa fecha.
 ## Opciones de exportación
 
 - Fila en blanco entre asientos.
-- Separar socio de negocios y documento en sus propias columnas.
-- Llenar `Fecha Registro Ventas` con la fecha de abono.
 - Filtrar por fecha de abono o comercio y exportar solo los asientos marcados.
 
 ## Tecnología
