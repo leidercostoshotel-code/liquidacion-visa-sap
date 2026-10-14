@@ -442,7 +442,7 @@ const INTERFAZ = `
   <footer>
     Comisión del asiento = importe bruto − importe neto de la liquidación, que equivale a COMISIÓN TOTAL + COMISIÓN IGV y además absorbe las comisiones devueltas en las operaciones negativas.
     Los importes en soles se calculan al tipo de cambio de la fecha de abono y se redondean a dos decimales.<br>
-    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 15 · Menú de sistemas
+    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 16 · Menú de sistemas
   </footer>
 </div>
 `;
@@ -844,8 +844,9 @@ function renderAsientos(){
 }
 
 /* ---------------- exportar ---------------- */
-// Columnas del asiento en SAP, hasta «Posición del formulario principal».
-const HDR = ['Cuenta de mayor/Código SN','Cuenta de mayor/Nombre SN','Débito (ME)','Crédito (ME)','Débito','Crédito','Débito (MS)','Crédito (MS)','Comentarios','Centro de Costo','Posición del formulario principal'];
+// Columnas del asiento en SAP, en el mismo orden que la pantalla de SAP (al pegar, cada valor cae
+// en la columna de esa posición), hasta «Posición del formulario principal».
+const HDR = ['Cuenta de mayor/Código SN','Cuenta de mayor/Nombre SN','Débito (ME)','Crédito (ME)','Débito','Crédito','Débito (MS)','Crédito (MS)','Comentarios','Referencia 1','Referencia 2','Centro de Costo','Posición del formulario principal'];
 const NCOL = HDR.length;
 const POSICION = 'Pagos de facturas de clientes';
 
@@ -861,8 +862,8 @@ function filasAsiento(a,k){
     row[4]=D?loc:null; row[5]=D?null:loc;
     row[6]=D?me:null;  row[7]=D?null:me;
     row[8]=l.comentario||null;
-    row[9]=l.cc? (Number.isFinite(Number(l.cc))?Number(l.cc):l.cc) : null;
-    row[10]=POSICION;
+    row[11]=l.cc? (Number.isFinite(Number(l.cc))?Number(l.cc):l.cc) : null;
+    row[12]=POSICION;
     return row;
   });
 }
@@ -911,7 +912,7 @@ const serialExcel = f => (Date.UTC(f.y,f.m-1,f.d) - Date.UTC(1899,11,30)) / 8640
 function hojaSAP(){
   const k=cfg();
   const ws=XLSX.utils.aoa_to_sheet(buildAOA());
-  ws['!cols']=[{wch:14},{wch:34},{wch:14},{wch:14},{wch:15},{wch:15},{wch:14},{wch:14},{wch:46},{wch:13},{wch:30}];
+  ws['!cols']=[{wch:14},{wch:34},{wch:14},{wch:14},{wch:15},{wch:15},{wch:14},{wch:14},{wch:46},{wch:12},{wch:12},{wch:13},{wch:30}];
   ws['!rows']=[]; ws['!rows'][1]={hpt:30};
   for(let c=0;c<NCOL;c++) ws[celda(1,c)].s=XS.encabezado;
   // Cada asiento con su propio color de banda; las filas de separación quedan vacías.

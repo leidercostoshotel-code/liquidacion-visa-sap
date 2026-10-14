@@ -86,8 +86,9 @@ código, poner el repositorio como privado en GitHub.
 4. **Convierte a moneda local** con un tipo de cambio por cada fecha de abono.
 5. **Exporta** un `.xlsx` con dos hojas:
    - `SAP`: las columnas del asiento de SAP hasta «Posición del formulario principal»
-     (Cuenta, Nombre, Débito/Crédito en ME, local y MS, Comentarios, Centro de Costo y
-     Posición del formulario principal, siempre «Pagos de facturas de clientes»). Importes
+     (Cuenta, Nombre, Débito/Crédito en ME, local y MS, Comentarios, Referencia 1 y 2 vacías,
+     Centro de Costo y Posición del formulario principal, siempre «Pagos de facturas de
+     clientes»), en el mismo orden que la pantalla del asiento en SAP. Importes
      como texto con prefijo de moneda
      (`USD 990.00`, `SOL 3,514.50`). Encabezado azul, cada asiento en su propio color de
      banda, débitos en azul y créditos en morado. Los estilos no cambian ningún valor.
