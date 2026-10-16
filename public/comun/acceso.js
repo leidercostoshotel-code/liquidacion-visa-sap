@@ -8,6 +8,9 @@
 "use strict";
 const $ = s => document.querySelector(s);
 
+const INACTIVIDAD_MIN = 20;   // minutos sin usar la página antes de cerrar la sesión
+const icono = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+
 const ESTILOS_ACCESO = `
 .login, .login *{box-sizing:border-box}
 .login h1, .login h2, .login p{font-family:inherit}
@@ -28,14 +31,26 @@ body[data-acceso="cargando"] .acceso-carga{display:grid}
   background:#0b2e59 url(/img/hotel.jpg) center/cover no-repeat;
   font-family:"IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color:#1a2533;
 }
-.login::before{
-  content:""; position:fixed; inset:0;
-  background:linear-gradient(105deg, rgba(6,22,46,.86) 0%, rgba(6,22,46,.55) 52%, rgba(6,22,46,.72) 100%);
+/* La foto va sin oscurecer; el texto se lee sobre un panel claro semitransparente. */
+.login-hero{
+  position:relative; align-self:end; margin:0 0 40px 40px; padding:34px 38px 28px; max-width:640px;
+  color:#0b2e59; background:rgba(255,255,255,.88); border-radius:20px;
+  backdrop-filter:blur(10px) saturate(1.1); -webkit-backdrop-filter:blur(10px) saturate(1.1);
+  box-shadow:0 24px 60px -24px rgba(0,0,0,.55), 0 2px 6px rgba(0,0,0,.10);
 }
-.login-hero{position:relative; align-self:end; padding:0 48px 56px; color:#fff; max-width:620px}
-.login-hero .kicker{font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:#c9d6e8; margin:0 0 10px}
-.login-hero h2{font-size:clamp(26px,3.4vw,40px); line-height:1.12; letter-spacing:-.02em; font-weight:600; margin:0 0 12px; text-wrap:balance}
-.login-hero p{margin:0; color:#dbe4f0; font-size:15px; max-width:46ch}
+.login-hero .kicker{display:flex; align-items:center; gap:10px; font-size:13px; font-weight:600; letter-spacing:.2em;
+  text-transform:uppercase; color:#0b4f9c; margin:0 0 12px}
+.login-hero .kicker::before{content:""; width:9px; height:9px; border-radius:50%; background:#ffd43b; box-shadow:0 0 0 4px rgba(255,212,59,.3)}
+.login-hero h2{font-size:clamp(38px,4.4vw,58px); line-height:1.05; letter-spacing:-.03em; font-weight:700; margin:0 0 12px; text-wrap:balance}
+.login-hero .lema{margin:0 0 24px; color:#3b4a5c; font-size:17px; max-width:46ch}
+.login-sis{list-style:none; margin:0; padding:0; display:grid; gap:12px}
+.login-sis li{display:flex; align-items:center; gap:14px; padding:12px 14px; border-radius:14px; background:#fff; border:1px solid #e3e8ef}
+.login-sis .ico{flex:none; width:44px; height:44px; border-radius:12px; display:grid; place-items:center; color:#0b2e59}
+.login-sis .ico svg{width:23px; height:23px}
+.login-sis b{display:block; font-size:16px; color:#0b2e59}
+.login-sis span{display:block; font-size:13.5px; color:#4f5d6e}
+.login-hero .seguro{display:flex; align-items:center; gap:8px; margin:18px 0 0; font-size:13px; color:#4f5d6e}
+.login-hero .seguro svg{flex:none; width:16px; height:16px; color:#17764a}
 .login-card{
   position:relative; margin:32px 40px 32px 0; padding:28px 28px 22px;
   background:rgba(255,255,255,.97); border-radius:16px;
@@ -43,7 +58,7 @@ body[data-acceso="cargando"] .acceso-carga{display:grid}
 }
 .login-logo{display:block; margin:0 0 22px; background:#f6f0e9; border-radius:10px; overflow:hidden; border:1px solid #e7ddd1}
 .login-logo img{display:block; width:100%; height:auto; clip-path:inset(0 3px)}
-.login-card h1{font-size:24px; letter-spacing:-.02em; font-weight:600; margin:0 0 4px}
+.login-card h1{font-size:26px; letter-spacing:-.02em; font-weight:600; margin:0 0 4px}
 .login-card .sub{margin:0 0 20px; color:#4f5d6e; font-size:14px}
 .login-card fieldset{border:0; padding:0; margin:0; min-width:0}
 .login-card label.f{display:block; font-size:12px; font-weight:600; color:#4f5d6e; margin:0 0 6px}
@@ -73,6 +88,19 @@ body[data-acceso="cargando"] .acceso-carga{display:grid}
 .login-msg{min-height:1.4em; margin:12px 0 0; font-size:13px; color:#a02f22}
 .login-msg.ok{color:#17764a}
 .login-pie{margin:16px 0 0; padding-top:14px; border-top:1px solid #e6eaef; font-size:11.5px; color:#7d8a9a; text-align:center}
+@media (min-width:1500px){
+  .login{grid-template-columns:minmax(0,1fr) 540px}
+  .login-hero{margin:0 0 56px 56px; padding:42px 46px 34px; max-width:780px}
+  .login-hero .lema{font-size:19px}
+  .login-sis b{font-size:17.5px}
+  .login-sis span{font-size:14.5px}
+  .login-card{margin-right:56px; padding:36px 36px 26px}
+  .login-card h1{font-size:30px}
+  .login-card .sub{font-size:15.5px}
+  .login-card label.f, .login-card .recordar, .login-card .link{font-size:14px}
+  .login-card input[type=email], .login-card input[type=password], .login-card input[type=text]{font-size:16.5px; padding:13px 14px}
+  .login-card .entrar{font-size:16.5px; padding:14px 16px}
+}
 @media (max-width:860px){
   .login{grid-template-columns:1fr; align-items:start}
   .login-hero{display:none}
@@ -84,7 +112,15 @@ const ACCESO = `
   <section class="login-hero">
     <p class="kicker">Swissôtel Lima · Contabilidad</p>
     <h2>Sistemas contables</h2>
-    <p>Liquidación VISA → SAP y Alquiler de Impresoras, en un solo lugar.</p>
+    <p class="lema">Las herramientas del área contable, en un solo lugar.</p>
+    <ul class="login-sis">
+      <li><i class="ico" style="background:#ffd43b">${icono('<rect x="2.5" y="5" width="19" height="14" rx="2.5"/><path d="M2.5 10h19M6.5 15h4"/>')}</i>
+        <div><b>Liquidación VISA → SAP</b><span>Asientos de tarjetas Izipay listos para SAP Business One.</span></div></li>
+      <li><i class="ico" style="background:#7fdcc5">${icono('<path d="M7 8V3.5h10V8"/><rect x="3" y="8" width="18" height="9" rx="2"/><path d="M7 14h10v6.5H7z"/><path d="M17.5 11h.01"/>')}</i>
+        <div><b>Alquiler de Impresoras</b><span>Cuadro de consumo Reprodata y su asiento contable.</span></div></li>
+    </ul>
+    <p class="seguro">${icono('<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>')}
+      Acceso seguro · la sesión se cierra tras ${INACTIVIDAD_MIN} minutos sin uso.</p>
   </section>
   <main class="login-card">
     <picture class="login-logo">
@@ -121,7 +157,6 @@ document.body.dataset.acceso = 'cargando';
 
 // SDK servido desde este mismo sitio (public/vendor), sin depender de un CDN externo.
 const SDK = '/vendor/';
-const INACTIVIDAD_MIN = 20;   // minutos sin usar la página antes de cerrar la sesión
 const ERRORES = {
   'auth/invalid-credential':'Correo o contraseña incorrectos.',
   'auth/invalid-login-credentials':'Correo o contraseña incorrectos.',

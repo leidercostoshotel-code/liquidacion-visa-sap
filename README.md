@@ -26,6 +26,8 @@ histórico; use *Exportar maestro* para respaldarlo o pasarlo a otra PC.
      enlace a `/` y un botón con `id="salirBtn"` (y opcionalmente `<span id="userMail">`).
 2. Añadir una entrada a `SISTEMAS` en `public/menu.js` con nombre, ruta, descripción, color
    (amarillo, turquesa, rosa, celeste, naranja, morado) e ícono. La tarjeta aparece sola.
+   Añadirlo también a la lista `login-sis` de `public/comun/acceso.js`, que lo muestra en la
+   pantalla de inicio de sesión.
 3. Si usa librerías externas, copiarlas a `public/vendor/` (la política de seguridad solo
    permite scripts del propio sitio).
 
