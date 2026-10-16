@@ -26,6 +26,8 @@ histórico; use *Exportar maestro* para respaldarlo o pasarlo a otra PC.
      enlace a `/` y un botón con `id="salirBtn"` (y opcionalmente `<span id="userMail">`).
 2. Añadir una entrada a `SISTEMAS` en `public/menu.js` con nombre, ruta, descripción, color
    (amarillo, turquesa, rosa, celeste, naranja, morado) e ícono. La tarjeta aparece sola.
+   Añadirlo también a la lista `login-sis` de `public/comun/acceso.js`, que lo muestra en la
+   pantalla de inicio de sesión.
 3. Si usa librerías externas, copiarlas a `public/vendor/` (la política de seguridad solo
    permite scripts del propio sitio).
 
@@ -87,8 +89,9 @@ código, poner el repositorio como privado en GitHub.
 5. **Exporta** un `.xlsx` con dos hojas:
    - `SAP`: las columnas del asiento de SAP hasta «Posición del formulario principal»
      (Cuenta, Nombre, Débito/Crédito en ME, local y MS, Comentarios, Referencia 1 y 2 vacías,
-     Centro de Costo y Posición del formulario principal, siempre «Pagos de facturas de
-     clientes»), en el mismo orden que la pantalla del asiento en SAP. Importes
+     Centro de Costo y Posición del formulario principal), en el mismo orden que la pantalla
+     del asiento en SAP. La posición «Pagos de facturas de clientes» va solo en las cuentas
+     de efectivo y bancos (clase 10); SAP la rechaza en las demás (comisión, anticipos). Importes
      como texto con prefijo de moneda
      (`USD 990.00`, `SOL 3,514.50`). Encabezado azul, cada asiento en su propio color de
      banda, débitos en azul y créditos en morado. Los estilos no cambian ningún valor.

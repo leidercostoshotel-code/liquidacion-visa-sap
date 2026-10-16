@@ -442,7 +442,7 @@ const INTERFAZ = `
   <footer>
     Comisión del asiento = importe bruto − importe neto de la liquidación, que equivale a COMISIÓN TOTAL + COMISIÓN IGV y además absorbe las comisiones devueltas en las operaciones negativas.
     Los importes en soles se calculan al tipo de cambio de la fecha de abono y se redondean a dos decimales.<br>
-    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 16 · Menú de sistemas
+    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 18 · Menú de sistemas
   </footer>
 </div>
 `;
@@ -849,6 +849,9 @@ function renderAsientos(){
 const HDR = ['Cuenta de mayor/Código SN','Cuenta de mayor/Nombre SN','Débito (ME)','Crédito (ME)','Débito','Crédito','Débito (MS)','Crédito (MS)','Comentarios','Referencia 1','Referencia 2','Centro de Costo','Posición del formulario principal'];
 const NCOL = HDR.length;
 const POSICION = 'Pagos de facturas de clientes';
+// SAP solo acepta la posición del flujo de caja en cuentas de efectivo y bancos (clase 10 del plan
+// contable). En otras cuentas, como la comisión (94…) o los anticipos (12…), rechaza la importación.
+const llevaPosicion = cta => /^10/.test(String(cta||'').trim());
 
 function filasAsiento(a,k){
   const q=cuadre(a);
@@ -863,7 +866,7 @@ function filasAsiento(a,k){
     row[6]=D?me:null;  row[7]=D?null:me;
     row[8]=l.comentario||null;
     row[11]=l.cc? (Number.isFinite(Number(l.cc))?Number(l.cc):l.cc) : null;
-    row[12]=POSICION;
+    if(llevaPosicion(l.cta)) row[12]=POSICION;
     return row;
   });
 }

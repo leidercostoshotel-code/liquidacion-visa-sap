@@ -106,7 +106,7 @@ const MENU = `
   <p class="m-sub">Elige a qué sistema quieres entrar.</p>
   <nav class="m-grid" aria-label="Sistemas">${SISTEMAS.map(tarjeta).join('')}
   </nav>
-  <p class="m-pie">Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 16</p>
+  <p class="m-pie">Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 18</p>
 </main>
 `;
 
