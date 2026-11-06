@@ -168,6 +168,20 @@ label.fld > span{
 .check i{display:block; font-style:normal; font-size:11.5px; color:var(--fg-faint)}
 
 fieldset{border:1px solid var(--line); border-radius:9px; padding:14px; margin:0 0 16px}
+/* parametrización del formulario de SAP */
+.fmt{margin-top:14px; border:1px solid var(--line); border-radius:9px; background:var(--surface-3)}
+.fmt > summary{cursor:pointer; padding:10px 12px; font-size:13px; font-weight:600; list-style-position:inside}
+.fmt-body{padding:0 12px 12px}
+.fmt-tabla{max-height:300px; overflow:auto; border:1px solid var(--line); border-radius:7px; background:var(--surface)}
+.fmt-tabla table{width:100%; border-collapse:collapse; font-size:12.5px}
+.fmt-tabla th{position:sticky; top:0; background:var(--surface-2); text-align:left; font-weight:600; padding:6px 10px; z-index:1}
+.fmt-tabla th:last-child, .fmt-tabla td:last-child{text-align:center; width:70px}
+.fmt-tabla td{padding:4px 10px; border-top:1px solid var(--line)}
+.fmt-tabla tr.on td:first-child{font-weight:600}
+.fmt-tabla input{accent-color:var(--accent)}
+.fmt-pie{display:flex; flex-wrap:wrap; align-items:center; gap:10px 18px; margin-top:10px}
+.fmt-res{margin-top:10px; font-size:12px; color:var(--fg-dim); line-height:1.5}
+.fmt-res b{color:var(--fg)}
 fieldset legend{
   font-size:10.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase;
   color:var(--accent); padding:0 7px;
@@ -389,11 +403,25 @@ const INTERFAZ = `
         <div class="grid g2">
           <label class="check"><input type="checkbox" id="optRound" checked>
             <b>Ajustar el redondeo en la línea del banco<i>Garantiza que débitos y créditos cuadren al céntimo en soles.</i></b></label>
-          <label class="check"><input type="checkbox" id="optAsociada" checked>
-            <b>Incluir la columna «Cuenta asociada»<i>Márquela si en su pantalla de SAP aparece después del nombre de la cuenta.</i></b></label>
           <label class="check"><input type="checkbox" id="optSep" checked>
             <b>Fila en blanco entre asientos<i>Separa cada liquidación, igual que en su hoja de trabajo.</i></b></label>
         </div>
+        <details class="fmt" id="fmt">
+          <summary>Parametrización del formulario · Registro en el diario</summary>
+          <div class="fmt-body">
+            <p class="hint" style="margin:0 0 10px">Marque las mismas columnas <b>visibles</b> que tiene en SAP
+              (Registro en el diario → Parametrizaciones de formulario → Formato de tabla). Al pegar, SAP
+              coloca cada valor según su posición; así cae en la columna correcta. Cada navegador recuerda su parametrización.</p>
+            <div class="fmt-tabla"><table><thead><tr><th>Columna</th><th>Visible</th></tr></thead>
+              <tbody id="fmtLista"></tbody></table></div>
+            <div class="fmt-pie">
+              <label class="check"><input type="checkbox" id="fmtME" checked><b>Visualizar en ME</b></label>
+              <label class="check"><input type="checkbox" id="fmtMS" checked><b>Visualizar en MS</b></label>
+              <button class="btn sm" type="button" id="fmtReset">Restablecer valor propuesto</button>
+            </div>
+            <div class="fmt-res" id="fmtRes"></div>
+          </div>
+        </details>
       </fieldset>
     </div>
   </section>
@@ -444,7 +472,7 @@ const INTERFAZ = `
   <footer>
     Comisión del asiento = importe bruto − importe neto de la liquidación, que equivale a COMISIÓN TOTAL + COMISIÓN IGV y además absorbe las comisiones devueltas en las operaciones negativas.
     Los importes en soles se calculan al tipo de cambio de la fecha de abono y se redondean a dos decimales.<br>
-    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 21 · Menú de sistemas
+    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 22 · Menú de sistemas
   </footer>
 </div>
 `;
@@ -580,7 +608,8 @@ function cfg(){
     comision:$('#cComision').value.trim(), banco:$('#cBanco').value.trim(),
     pfME:$('#pfME').value.trim(), pfLoc:$('#pfLoc').value.trim(),
     cc:$('#ccCom').value.trim(), glosa:$('#glosa').value,
-    round:$('#optRound').checked, sep:$('#optSep').checked, asociada:$('#optAsociada').checked,
+    round:$('#optRound').checked, sep:$('#optSep').checked,
+    formato: S.formato ? S.formato() : leerFormato(),
   };
 }
 function buildAsientos(){
@@ -677,10 +706,8 @@ function wireCuentaHints(){
     upd();
   });
   ['#pfME','#pfLoc','#ccCom','#glosa'].forEach(s=>$(s).addEventListener('input',rebuild));
-  ['#optRound','#optSep','#optAsociada'].forEach(s=>$(s).addEventListener('change',()=>{ renderAsientos(); renderSum4(); }));
-  // La pantalla de SAP cambia según la PC: se recuerda en este navegador si lleva «Cuenta asociada».
-  try{ const g=localStorage.getItem('liq.cuentaAsociada'); if(g!==null) $('#optAsociada').checked = g==='1'; }catch(_){}
-  $('#optAsociada').addEventListener('change',e=>{ try{ localStorage.setItem('liq.cuentaAsociada', e.target.checked?'1':'0'); }catch(_){} });
+  ['#optRound','#optSep'].forEach(s=>$(s).addEventListener('change',()=>{ renderAsientos(); renderSum4(); }));
+  wireFormato();
 }
 
 /* ---------------- render: paso 3 ---------------- */
@@ -851,25 +878,94 @@ function renderAsientos(){
 /* ---------------- exportar ---------------- */
 // Columnas del asiento en SAP, en el mismo orden que la pantalla de SAP (al pegar, cada valor cae
 // en la columna de esa posición), hasta «Posición del formulario principal».
-// «Cuenta asociada» solo aparece en algunas configuraciones de la pantalla; es opcional (paso 2).
-// tipo: 'd' débito, 'c' crédito (solo para el color en el Excel).
-const COLS = [
-  {id:'cta', t:'Cuenta de mayor/Código SN', w:14},
-  {id:'nom', t:'Cuenta de mayor/Nombre SN', w:34},
-  {id:'aso', t:'Cuenta asociada', w:14, opt:'asociada'},
-  {id:'dME', t:'Débito (ME)', w:14, tipo:'d'},
-  {id:'cME', t:'Crédito (ME)', w:14, tipo:'c'},
-  {id:'dL',  t:'Débito', w:15, tipo:'d'},
-  {id:'cL',  t:'Crédito', w:15, tipo:'c'},
-  {id:'dMS', t:'Débito (MS)', w:14, tipo:'d'},
-  {id:'cMS', t:'Crédito (MS)', w:14, tipo:'c'},
-  {id:'com', t:'Comentarios', w:46},
-  {id:'r1',  t:'Referencia 1', w:12},
-  {id:'r2',  t:'Referencia 2', w:12},
-  {id:'cc',  t:'Centro de Costo', w:13},
-  {id:'pos', t:'Posición del formulario principal', w:30},
-];
-const columnas = k => COLS.filter(c => !c.opt || k[c.opt]);
+/* Parametrización del formulario «Registro en el diario» de SAP: las columnas de su tabla, en el
+   mismo orden que en Parametrizaciones de formulario → Formato de tabla. v = visible por defecto;
+   fija = siempre visible. Débito y Crédito se abren en ME / local / MS según «Visualizar en ME/MS». */
+const FORMATO_SAP = [
+  ['Cuenta de mayor/Código SN',1,1], ['Cuenta de mayor/Nombre SN',1,1], ['Cuenta asociada',1],
+  ['Débito',1,1], ['Crédito',1,1], ['Comentarios',1], ['Modelo de observaciones'],
+  ['Referencia 1',1], ['Referencia 2',1], ['Referencia 3'], ['Fe.venc.'], ['Fecha contab.'],
+  ['Fecha documento'], ['Proyecto'], ['Cuenta de contabilización fiscal'], ['Indicador de impuestos'],
+  ['Tipo de jurisdicción fiscal'], ['Código de emplazamiento fiscal'], ['Número de identificación fiscal'],
+  ['Número de recibo'], ['Importe del impuesto'], ['Importe del impuesto (MEST)'], ['Valor bruto'],
+  ['Valor bruto (ME)'], ['Cuenta de contrapartida'], ['Centro de Costo',1], ['Válido desde'],
+  ['Número referencia de pago'], ['Saldo vencido (ME)'], ['Saldo vencido (ML)'], ['Saldo vencido (MEST)'],
+  ['Posición del formulario principal',1], ['Bloqueo de pago',1], ['Motivo del bloqueo',1],
+  ['Saldo de cuenta previsto (ML)'], ['Saldo de cuenta previsto (MS)'], ['Saldo de cuenta previsto (ME)'],
+  ['Ejecución de orden de pago',1], ['Fuente de contabilización'], ['Número de documento de origen'],
+  ['ID interno de línea de fuente'], ['Elemento de costo'], ['Cuenta destino',1], ['Cuenta patrimonial',1],
+  ['Comp. destino',1], ['Procesado DC',1], ['Info socio de negocios',1], ['Info de terceros',1],
+  ['Tipo doc. - Serie - Numero',1], ['Socio Negocios',1], ['Fecha Registro Ventas',1],
+].map(([t,v,fija])=>({t, v:!!v, fija:!!fija}));
+// Columnas que el sistema llena (id del valor y ancho en el Excel); las demás van vacías.
+const LLENA = {
+  'Cuenta de mayor/Código SN':['cta',14], 'Cuenta de mayor/Nombre SN':['nom',34], 'Cuenta asociada':['aso',14],
+  'Comentarios':['com',46], 'Centro de Costo':['cc',13], 'Posición del formulario principal':['pos',30],
+};
+const CLAVE_FORMATO='liq.formatoSAP';
+function formatoPropuesto(){ return {vis:FORMATO_SAP.filter(c=>c.v).map(c=>c.t), me:true, ms:true}; }
+function leerFormato(){
+  try{
+    const g=JSON.parse(localStorage.getItem(CLAVE_FORMATO)||'null');
+    if(g && Array.isArray(g.vis)) return {vis:g.vis.filter(t=>typeof t==='string'), me:g.me!==false, ms:g.ms!==false};
+    // versión anterior: solo recordaba si la pantalla tenía «Cuenta asociada»
+    if(localStorage.getItem('liq.cuentaAsociada')==='0'){ const f=formatoPropuesto(); f.vis=f.vis.filter(t=>t!=='Cuenta asociada'); return f; }
+  }catch(_){}
+  return formatoPropuesto();
+}
+function guardarFormato(f){ try{ localStorage.setItem(CLAVE_FORMATO, JSON.stringify(f)); }catch(_){} }
+/* Columnas de la tabla de SAP según la parametrización (en orden), hasta la última que el
+   sistema llena: las de después no hacen falta para pegar y SAP conserva sus valores. */
+function columnas(k){
+  const f=k.formato, vis=new Set(f.vis), cols=[];
+  for(const c of FORMATO_SAP){
+    if(!c.fija && !vis.has(c.t)) continue;
+    if(c.t==='Débito'){
+      if(f.me) cols.push({id:'dME',t:'Débito (ME)',w:14,tipo:'d'},{id:'cME',t:'Crédito (ME)',w:14,tipo:'c'});
+      cols.push({id:'dL',t:'Débito',w:15,tipo:'d'});
+    } else if(c.t==='Crédito'){
+      cols.push({id:'cL',t:'Crédito',w:15,tipo:'c'});
+      if(f.ms) cols.push({id:'dMS',t:'Débito (MS)',w:14,tipo:'d'},{id:'cMS',t:'Crédito (MS)',w:14,tipo:'c'});
+    } else {
+      const ll=LLENA[c.t]; cols.push({id:ll?ll[0]:null, t:c.t, w:ll?ll[1]:Math.min(Math.max(c.t.length+2,12),30)});
+    }
+  }
+  const usa=c=>c.id && (c.id!=='pos' || LLENAR_POSICION);
+  let fin=cols.length; while(fin>0 && !usa(cols[fin-1])) fin--;
+  return cols.slice(0,fin);
+}
+function wireFormato(){
+  let f=leerFormato();
+  const lista=$('#fmtLista');
+  const pintar=()=>{
+    const vis=new Set(f.vis);
+    lista.innerHTML='';
+    FORMATO_SAP.forEach(c=>{
+      const on=c.fija||vis.has(c.t);
+      const tr=el('tr', on?'on':null); tr.append(el('td',null,c.t));
+      const td=el('td'), cb=el('input'); cb.type='checkbox'; cb.checked=on; cb.disabled=c.fija;
+      cb.setAttribute('aria-label','Visible: '+c.t);
+      cb.addEventListener('change',()=>{
+        f.vis = cb.checked ? FORMATO_SAP.filter(x=>x.t===c.t||f.vis.includes(x.t)).map(x=>x.t) : f.vis.filter(t=>t!==c.t);
+        tr.classList.toggle('on',cb.checked); cambio();
+      });
+      td.append(cb); tr.append(td); lista.append(tr);
+    });
+    $('#fmtME').checked=f.me; $('#fmtMS').checked=f.ms;
+    resumen();
+  };
+  const resumen=()=>{
+    const cols=columnas({formato:f});
+    const r=$('#fmtRes'); r.textContent='Al copiar se pegan ';
+    r.append(el('b',null,cols.length+' columnas'), ', desde la cuenta: '+cols.map(c=>c.t).join(' · '));
+  };
+  const cambio=()=>{ guardarFormato(f); resumen(); renderAsientos(); renderSum4(); };
+  $('#fmtME').addEventListener('change',e=>{ f.me=e.target.checked; cambio(); });
+  $('#fmtMS').addEventListener('change',e=>{ f.ms=e.target.checked; cambio(); });
+  $('#fmtReset').addEventListener('click',()=>{ f=formatoPropuesto(); pintar(); cambio(); });
+  S.formato=()=>f;
+  pintar();
+}
 // Por ahora la columna «Posición del formulario principal» va vacía. Para volver a llenarla,
 // cambiar LLENAR_POSICION a true.
 const LLENAR_POSICION = false;
@@ -893,7 +989,7 @@ function filasAsiento(a,k){
       cc: l.cc? (Number.isFinite(Number(l.cc))?Number(l.cc):l.cc) : null,
       pos:LLENAR_POSICION && llevaPosicion(l.cta) ? POSICION : null,
     };
-    return columnas(k).map(c => v[c.id] ?? null);
+    return columnas(k).map(c => c.id ? (v[c.id] ?? null) : null);
   });
 }
 function buildAOA(){
