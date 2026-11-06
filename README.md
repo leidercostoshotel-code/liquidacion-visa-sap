@@ -88,7 +88,8 @@ código, poner el repositorio como privado en GitHub.
 4. **Convierte a moneda local** con un tipo de cambio por cada fecha de abono.
 5. **Exporta** un `.xlsx` con dos hojas:
    - `SAP`: las columnas del asiento de SAP hasta «Posición del formulario principal»
-     (Cuenta, Nombre, Débito/Crédito en ME, local y MS, Comentarios, Referencia 1 y 2 vacías,
+     (Cuenta, Nombre, Cuenta asociada (opcional), Débito/Crédito en ME, local y MS,
+     Comentarios, Referencia 1 y 2 vacías,
      Centro de Costo y Posición del formulario principal), en el mismo orden que la pantalla
      del asiento en SAP. La posición «Pagos de facturas de clientes» va solo en las cuentas
      de efectivo y bancos (clase 10); SAP la rechaza en las demás (comisión, anticipos). Importes
@@ -134,6 +135,8 @@ desactiva mientras falte el tipo de cambio de esa fecha.
 ## Opciones de exportación
 
 - Fila en blanco entre asientos.
+- Columna «Cuenta asociada» después del nombre (con la misma cuenta), para las pantallas de
+  SAP que la muestran. Cada navegador recuerda si está marcada.
 - Filtrar por fecha de abono o comercio y exportar solo los asientos marcados.
 
 ## Tecnología

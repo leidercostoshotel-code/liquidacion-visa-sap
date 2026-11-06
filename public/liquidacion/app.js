@@ -389,6 +389,8 @@ const INTERFAZ = `
         <div class="grid g2">
           <label class="check"><input type="checkbox" id="optRound" checked>
             <b>Ajustar el redondeo en la línea del banco<i>Garantiza que débitos y créditos cuadren al céntimo en soles.</i></b></label>
+          <label class="check"><input type="checkbox" id="optAsociada" checked>
+            <b>Incluir la columna «Cuenta asociada»<i>Márquela si en su pantalla de SAP aparece después del nombre de la cuenta.</i></b></label>
           <label class="check"><input type="checkbox" id="optSep" checked>
             <b>Fila en blanco entre asientos<i>Separa cada liquidación, igual que en su hoja de trabajo.</i></b></label>
         </div>
@@ -442,7 +444,7 @@ const INTERFAZ = `
   <footer>
     Comisión del asiento = importe bruto − importe neto de la liquidación, que equivale a COMISIÓN TOTAL + COMISIÓN IGV y además absorbe las comisiones devueltas en las operaciones negativas.
     Los importes en soles se calculan al tipo de cambio de la fecha de abono y se redondean a dos decimales.<br>
-    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 18 · Menú de sistemas
+    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 19 · Menú de sistemas
   </footer>
 </div>
 `;
@@ -578,7 +580,7 @@ function cfg(){
     comision:$('#cComision').value.trim(), banco:$('#cBanco').value.trim(),
     pfME:$('#pfME').value.trim(), pfLoc:$('#pfLoc').value.trim(),
     cc:$('#ccCom').value.trim(), glosa:$('#glosa').value,
-    round:$('#optRound').checked, sep:$('#optSep').checked,
+    round:$('#optRound').checked, sep:$('#optSep').checked, asociada:$('#optAsociada').checked,
   };
 }
 function buildAsientos(){
@@ -675,7 +677,10 @@ function wireCuentaHints(){
     upd();
   });
   ['#pfME','#pfLoc','#ccCom','#glosa'].forEach(s=>$(s).addEventListener('input',rebuild));
-  ['#optRound','#optSep'].forEach(s=>$(s).addEventListener('change',()=>{ renderAsientos(); renderSum4(); }));
+  ['#optRound','#optSep','#optAsociada'].forEach(s=>$(s).addEventListener('change',()=>{ renderAsientos(); renderSum4(); }));
+  // La pantalla de SAP cambia según la PC: se recuerda en este navegador si lleva «Cuenta asociada».
+  try{ const g=localStorage.getItem('liq.cuentaAsociada'); if(g!==null) $('#optAsociada').checked = g==='1'; }catch(_){}
+  $('#optAsociada').addEventListener('change',e=>{ try{ localStorage.setItem('liq.cuentaAsociada', e.target.checked?'1':'0'); }catch(_){} });
 }
 
 /* ---------------- render: paso 3 ---------------- */
@@ -846,8 +851,25 @@ function renderAsientos(){
 /* ---------------- exportar ---------------- */
 // Columnas del asiento en SAP, en el mismo orden que la pantalla de SAP (al pegar, cada valor cae
 // en la columna de esa posición), hasta «Posición del formulario principal».
-const HDR = ['Cuenta de mayor/Código SN','Cuenta de mayor/Nombre SN','Débito (ME)','Crédito (ME)','Débito','Crédito','Débito (MS)','Crédito (MS)','Comentarios','Referencia 1','Referencia 2','Centro de Costo','Posición del formulario principal'];
-const NCOL = HDR.length;
+// «Cuenta asociada» solo aparece en algunas configuraciones de la pantalla; es opcional (paso 2).
+// tipo: 'd' débito, 'c' crédito (solo para el color en el Excel).
+const COLS = [
+  {id:'cta', t:'Cuenta de mayor/Código SN', w:14},
+  {id:'nom', t:'Cuenta de mayor/Nombre SN', w:34},
+  {id:'aso', t:'Cuenta asociada', w:14, opt:'asociada'},
+  {id:'dME', t:'Débito (ME)', w:14, tipo:'d'},
+  {id:'cME', t:'Crédito (ME)', w:14, tipo:'c'},
+  {id:'dL',  t:'Débito', w:15, tipo:'d'},
+  {id:'cL',  t:'Crédito', w:15, tipo:'c'},
+  {id:'dMS', t:'Débito (MS)', w:14, tipo:'d'},
+  {id:'cMS', t:'Crédito (MS)', w:14, tipo:'c'},
+  {id:'com', t:'Comentarios', w:46},
+  {id:'r1',  t:'Referencia 1', w:12},
+  {id:'r2',  t:'Referencia 2', w:12},
+  {id:'cc',  t:'Centro de Costo', w:13},
+  {id:'pos', t:'Posición del formulario principal', w:30},
+];
+const columnas = k => COLS.filter(c => !c.opt || k[c.opt]);
 const POSICION = 'Pagos de facturas de clientes';
 // SAP solo acepta la posición del flujo de caja en cuentas de efectivo y bancos (clase 10 del plan
 // contable). En otras cuentas, como la comisión (94…) o los anticipos (12…), rechaza la importación.
@@ -858,25 +880,26 @@ function filasAsiento(a,k){
   return a.lineas.map((l,i)=>{
     const me=`${k.pfME} ${money(l.me)}`, loc=`${k.pfLoc} ${money(q.sol[i])}`;
     const D=l.dc==='D';
-    const row=new Array(NCOL).fill(null);
-    const cta=Number(l.cta); row[0]=Number.isFinite(cta)&&String(cta)===l.cta?cta:l.cta;
-    row[1]=nombreCta(l.cta)||null;
-    row[2]=D?me:null;  row[3]=D?null:me;
-    row[4]=D?loc:null; row[5]=D?null:loc;
-    row[6]=D?me:null;  row[7]=D?null:me;
-    row[8]=l.comentario||null;
-    row[11]=l.cc? (Number.isFinite(Number(l.cc))?Number(l.cc):l.cc) : null;
-    if(llevaPosicion(l.cta)) row[12]=POSICION;
-    return row;
+    const n=Number(l.cta), cta=Number.isFinite(n)&&String(n)===l.cta?n:l.cta;
+    const v={
+      cta, nom:nombreCta(l.cta)||null, aso:cta,
+      dME:D?me:null,  cME:D?null:me,
+      dL: D?loc:null, cL: D?null:loc,
+      dMS:D?me:null,  cMS:D?null:me,
+      com:l.comentario||null,
+      cc: l.cc? (Number.isFinite(Number(l.cc))?Number(l.cc):l.cc) : null,
+      pos:llevaPosicion(l.cta)?POSICION:null,
+    };
+    return columnas(k).map(c => v[c.id] ?? null);
   });
 }
 function buildAOA(){
-  const k=cfg();
-  const aoa=[ new Array(NCOL).fill(null), HDR.slice() ];
+  const k=cfg(), cols=columnas(k), vacia=()=>new Array(cols.length).fill(null);
+  const aoa=[ vacia(), cols.map(c=>c.t) ];
   const inc=S.asientos.filter(a=>a.incluir);
   inc.forEach((a,ai)=>{
     aoa.push(...filasAsiento(a,k));
-    if(k.sep && ai<inc.length-1) aoa.push(new Array(NCOL).fill(null));
+    if(k.sep && ai<inc.length-1) aoa.push(vacia());
   });
   return aoa;
 }
@@ -913,20 +936,20 @@ const celda = (r,c) => XLSX.utils.encode_cell({r,c});
 const serialExcel = f => (Date.UTC(f.y,f.m-1,f.d) - Date.UTC(1899,11,30)) / 86400000;
 
 function hojaSAP(){
-  const k=cfg();
+  const k=cfg(), cols=columnas(k);
   const ws=XLSX.utils.aoa_to_sheet(buildAOA());
-  ws['!cols']=[{wch:14},{wch:34},{wch:14},{wch:14},{wch:15},{wch:15},{wch:14},{wch:14},{wch:46},{wch:12},{wch:12},{wch:13},{wch:30}];
+  ws['!cols']=cols.map(c=>({wch:c.w}));
   ws['!rows']=[]; ws['!rows'][1]={hpt:30};
-  for(let c=0;c<NCOL;c++) ws[celda(1,c)].s=XS.encabezado;
+  for(let c=0;c<cols.length;c++) ws[celda(1,c)].s=XS.encabezado;
   // Cada asiento con su propio color de banda; las filas de separación quedan vacías.
   const inc=S.asientos.filter(a=>a.incluir);
   let r=2;
   inc.forEach((a,ai)=>{
     const fill={fgColor:{rgb:XS.banda[ai%2]}};
-    for(let n=0;n<a.lineas.length;n++,r++) for(let c=0;c<NCOL;c++){
+    for(let n=0;n<a.lineas.length;n++,r++) for(let c=0;c<cols.length;c++){
       const ref=celda(r,c);
       if(!ws[ref]) ws[ref]={t:'s',v:''};
-      const deb=c===2||c===4||c===6, cre=c===3||c===5||c===7;
+      const deb=cols[c].tipo==='d', cre=cols[c].tipo==='c';
       ws[ref].s={
         fill, border:XS.borde('D6DDE6'),
         font:XS.fuente({bold:c===0, color:{rgb: deb?XS.debito : cre?XS.credito : '1A2533'}}),
