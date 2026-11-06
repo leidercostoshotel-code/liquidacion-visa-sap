@@ -92,8 +92,9 @@ código, poner el repositorio como privado en GitHub.
      (Cuenta, Nombre, Cuenta asociada (opcional), Débito/Crédito en ME, local y MS,
      Comentarios, Referencia 1 y 2 vacías,
      Centro de Costo y Posición del formulario principal), en el mismo orden que la pantalla
-     del asiento en SAP. La posición «Pagos de facturas de clientes» va solo en las cuentas
-     de efectivo y bancos (clase 10); SAP la rechaza en las demás (comisión, anticipos). Importes
+     del asiento en SAP. «Posición del formulario principal» va vacía por ahora
+     (`LLENAR_POSICION` en `app.js`); al activarla, «Pagos de facturas de clientes» va solo en
+     las cuentas de efectivo y bancos (clase 10), porque SAP la rechaza en las demás. Importes
      como texto con prefijo de moneda
      (`USD 990.00`, `SOL 3,514.50`). Encabezado azul, cada asiento en su propio color de
      banda, débitos en azul y créditos en morado. Los estilos no cambian ningún valor.

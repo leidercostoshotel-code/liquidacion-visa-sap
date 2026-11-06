@@ -444,7 +444,7 @@ const INTERFAZ = `
   <footer>
     Comisión del asiento = importe bruto − importe neto de la liquidación, que equivale a COMISIÓN TOTAL + COMISIÓN IGV y además absorbe las comisiones devueltas en las operaciones negativas.
     Los importes en soles se calculan al tipo de cambio de la fecha de abono y se redondean a dos decimales.<br>
-    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 20 · Menú de sistemas
+    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 21 · Menú de sistemas
   </footer>
 </div>
 `;
@@ -870,6 +870,9 @@ const COLS = [
   {id:'pos', t:'Posición del formulario principal', w:30},
 ];
 const columnas = k => COLS.filter(c => !c.opt || k[c.opt]);
+// Por ahora la columna «Posición del formulario principal» va vacía. Para volver a llenarla,
+// cambiar LLENAR_POSICION a true.
+const LLENAR_POSICION = false;
 const POSICION = 'Pagos de facturas de clientes';
 // SAP solo acepta la posición del flujo de caja en cuentas de efectivo y bancos (clase 10 del plan
 // contable). En otras cuentas, como la comisión (94…) o los anticipos (12…), rechaza la importación.
@@ -888,7 +891,7 @@ function filasAsiento(a,k){
       dMS:D?me:null,  cMS:D?null:me,
       com:l.comentario||null,
       cc: l.cc? (Number.isFinite(Number(l.cc))?Number(l.cc):l.cc) : null,
-      pos:llevaPosicion(l.cta)?POSICION:null,
+      pos:LLENAR_POSICION && llevaPosicion(l.cta) ? POSICION : null,
     };
     return columnas(k).map(c => v[c.id] ?? null);
   });
