@@ -84,7 +84,8 @@ código, poner el repositorio como privado en GitHub.
 2. **Agrupa las liquidaciones** por comercio y fecha de abono, separadas por las filas en
    blanco del reporte.
 3. **Arma el asiento** de cada liquidación: crédito del importe bruto, débito de la comisión
-   con su centro de costo y débito del neto a la cuenta del banco.
+   y débito del neto a la cuenta del banco. Todas las líneas llevan el centro de costo
+   configurado (403 por defecto).
 4. **Convierte a moneda local** con un tipo de cambio por cada fecha de abono.
 5. **Exporta** un `.xlsx` con dos hojas:
    - `SAP`: las columnas del asiento de SAP hasta «Posición del formulario principal»
