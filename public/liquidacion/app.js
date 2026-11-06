@@ -169,10 +169,15 @@ label.fld > span{
 
 fieldset{border:1px solid var(--line); border-radius:9px; padding:14px; margin:0 0 16px}
 /* parametrización del formulario de SAP */
-.fmt{margin-top:14px; border:1px solid var(--line); border-radius:9px; background:var(--surface-3)}
-.fmt > summary{cursor:pointer; padding:10px 12px; font-size:13px; font-weight:600; list-style-position:inside}
-.fmt-body{padding:0 12px 12px}
-.fmt-tabla{max-height:300px; overflow:auto; border:1px solid var(--line); border-radius:7px; background:var(--surface)}
+.fmt-fila{display:flex; flex-wrap:wrap; align-items:center; gap:8px 12px; margin-top:14px}
+.fmt-fila .hint{margin:0}
+.fmt-dlg{width:min(720px, calc(100vw - 32px)); max-height:calc(100vh - 48px); padding:0; border:1px solid var(--line);
+  border-radius:12px; background:var(--surface); color:var(--fg); box-shadow:0 30px 70px -20px rgba(0,0,0,.5)}
+.fmt-dlg::backdrop{background:rgba(10,20,35,.45)}
+.fmt-cab{display:flex; align-items:center; gap:12px; padding:14px 16px; border-bottom:1px solid var(--line)}
+.fmt-cab h2{margin:0; flex:1; font-size:15px}
+.fmt-body{padding:14px 16px 16px}
+.fmt-tabla{max-height:min(380px, calc(100vh - 330px)); overflow:auto; border:1px solid var(--line); border-radius:7px; background:var(--surface)}
 .fmt-tabla table{width:100%; border-collapse:collapse; font-size:12.5px}
 .fmt-tabla th{position:sticky; top:0; background:var(--surface-2); text-align:left; font-weight:600; padding:6px 10px; z-index:1}
 .fmt-tabla th:last-child, .fmt-tabla td:last-child{text-align:center; width:70px}
@@ -305,6 +310,7 @@ const INTERFAZ = `
     <div class="brand"><b>Liquidación VISA → SAP</b><span>Izipay · SAP B1</span></div>
     <div class="topbar-sp"></div>
     <div class="filechip" id="chip"><em id="chipName"></em></div>
+    <button class="btn sm" id="fmtAbrir" type="button" title="Columnas visibles de su formulario de SAP">Parametrización SAP</button>
     <button class="btn sm" id="themeBtn" type="button" title="Cambiar tema">Tema</button>
     <span class="userchip" id="userMail"></span>
     <button class="btn sm" id="salirBtn" type="button" title="Cerrar sesión">Salir</button>
@@ -406,22 +412,10 @@ const INTERFAZ = `
           <label class="check"><input type="checkbox" id="optSep" checked>
             <b>Fila en blanco entre asientos<i>Separa cada liquidación, igual que en su hoja de trabajo.</i></b></label>
         </div>
-        <details class="fmt" id="fmt">
-          <summary>Parametrización del formulario · Registro en el diario</summary>
-          <div class="fmt-body">
-            <p class="hint" style="margin:0 0 10px">Marque las mismas columnas <b>visibles</b> que tiene en SAP
-              (Registro en el diario → Parametrizaciones de formulario → Formato de tabla). Al pegar, SAP
-              coloca cada valor según su posición; así cae en la columna correcta. Cada navegador recuerda su parametrización.</p>
-            <div class="fmt-tabla"><table><thead><tr><th>Columna</th><th>Visible</th></tr></thead>
-              <tbody id="fmtLista"></tbody></table></div>
-            <div class="fmt-pie">
-              <label class="check"><input type="checkbox" id="fmtME" checked><b>Visualizar en ME</b></label>
-              <label class="check"><input type="checkbox" id="fmtMS" checked><b>Visualizar en MS</b></label>
-              <button class="btn sm" type="button" id="fmtReset">Restablecer valor propuesto</button>
-            </div>
-            <div class="fmt-res" id="fmtRes"></div>
-          </div>
-        </details>
+        <div class="fmt-fila">
+          <button class="btn sm" type="button" id="fmtAbrir2">Parametrización del formulario SAP…</button>
+          <span class="hint">Columnas visibles de su pantalla «Registro en el diario»; definen el orden al copiar y en el Excel.</span>
+        </div>
       </fieldset>
     </div>
   </section>
@@ -472,9 +466,31 @@ const INTERFAZ = `
   <footer>
     Comisión del asiento = importe bruto − importe neto de la liquidación, que equivale a COMISIÓN TOTAL + COMISIÓN IGV y además absorbe las comisiones devueltas en las operaciones negativas.
     Los importes en soles se calculan al tipo de cambio de la fecha de abono y se redondean a dos decimales.<br>
-    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 22 · Menú de sistemas
+    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 23 · Menú de sistemas
   </footer>
 </div>
+
+<dialog class="fmt-dlg" id="fmtDlg" aria-labelledby="fmtTit">
+  <div class="fmt-cab">
+    <h2 id="fmtTit">Parametrización del formulario · Registro en el diario</h2>
+    <button class="btn sm" type="button" id="fmtCerrar" aria-label="Cerrar">✕</button>
+  </div>
+  <div class="fmt-body">
+    <p class="hint" style="margin:0 0 10px">Marque las mismas columnas <b>visibles</b> que tiene en SAP
+      (Registro en el diario → Parametrizaciones de formulario → Formato de tabla). Al pegar, SAP coloca cada
+      valor según su posición; así cae en la columna correcta. Cada navegador recuerda su parametrización.</p>
+    <div class="fmt-tabla"><table><thead><tr><th>Columna</th><th>Visible</th></tr></thead>
+      <tbody id="fmtLista"></tbody></table></div>
+    <div class="fmt-pie">
+      <label class="check"><input type="checkbox" id="fmtME" checked><b>Visualizar en ME</b></label>
+      <label class="check"><input type="checkbox" id="fmtMS" checked><b>Visualizar en MS</b></label>
+      <button class="btn sm" type="button" id="fmtReset">Restablecer valor propuesto</button>
+      <span style="flex:1"></span>
+      <button class="btn primary" type="button" id="fmtListo">Listo</button>
+    </div>
+    <div class="fmt-res" id="fmtRes"></div>
+  </div>
+</dialog>
 `;
 
 /* ---------------- lógica (solo con sesión iniciada) ---------------- */
@@ -964,6 +980,11 @@ function wireFormato(){
   $('#fmtMS').addEventListener('change',e=>{ f.ms=e.target.checked; cambio(); });
   $('#fmtReset').addEventListener('click',()=>{ f=formatoPropuesto(); pintar(); cambio(); });
   S.formato=()=>f;
+  const dlg=$('#fmtDlg'), abrir=()=>{ if(!dlg.open) dlg.showModal(); };
+  $('#fmtAbrir').addEventListener('click',abrir);
+  $('#fmtAbrir2').addEventListener('click',abrir);
+  $('#fmtCerrar').addEventListener('click',()=>dlg.close());
+  $('#fmtListo').addEventListener('click',()=>dlg.close());
   pintar();
 }
 // Por ahora la columna «Posición del formulario principal» va vacía. Para volver a llenarla,

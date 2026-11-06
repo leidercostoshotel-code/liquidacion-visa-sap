@@ -89,7 +89,7 @@ código, poner el repositorio como privado en GitHub.
 4. **Convierte a moneda local** con un tipo de cambio por cada fecha de abono.
 5. **Exporta** un `.xlsx` con dos hojas:
    - `SAP`: las columnas visibles del asiento de SAP según la **parametrización del
-     formulario** (paso 2), en el mismo orden que la pantalla, hasta la última que el sistema
+     formulario** (botón «Parametrización SAP»), en el mismo orden que la pantalla, hasta la última que el sistema
      llena (Cuenta, Nombre, Cuenta asociada, Débito/Crédito en ME, local y MS, Comentarios,
      Centro de Costo). Las demás columnas visibles intermedias van vacías.
      «Posición del formulario principal» va vacía por ahora (`LLENAR_POSICION` en `app.js`);
@@ -137,7 +137,8 @@ desactiva mientras falte el tipo de cambio de esa fecha.
 ## Opciones de exportación
 
 - Fila en blanco entre asientos.
-- Parametrización del formulario «Registro en el diario»: la misma lista de columnas de SAP
+- Parametrización del formulario «Registro en el diario» (botón **Parametrización SAP** arriba,
+  disponible aunque no se haya cargado un archivo): la misma lista de columnas de SAP
   (Parametrizaciones de formulario → Formato de tabla) con su casilla **Visible**, más
   «Visualizar en ME» y «Visualizar en MS». Cada usuario marca las que tiene visibles en su SAP
   para que al pegar cada valor caiga en su columna. Viene con la parametrización propuesta y
