@@ -378,7 +378,7 @@ const INTERFAZ = `
         <div class="grid g3">
           <label class="fld"><span>Prefijo moneda extranjera</span><input type="text" id="pfME" value="USD"></label>
           <label class="fld"><span>Prefijo moneda local</span><input type="text" id="pfLoc" value="SOL"></label>
-          <label class="fld"><span>Centro de costo · comisión</span><input type="text" id="ccCom" value="403"></label>
+          <label class="fld"><span>Centro de costo · todas las líneas</span><input type="text" id="ccCom" value="403"></label>
         </div>
         <label class="fld" style="margin-top:14px"><span>Glosa de comisión y banco</span>
           <input type="text" id="glosa" value="DEPOSITO TARJETA MCVISA USD" style="font-family:var(--sans)"></label>
@@ -444,7 +444,7 @@ const INTERFAZ = `
   <footer>
     Comisión del asiento = importe bruto − importe neto de la liquidación, que equivale a COMISIÓN TOTAL + COMISIÓN IGV y además absorbe las comisiones devueltas en las operaciones negativas.
     Los importes en soles se calculan al tipo de cambio de la fecha de abono y se redondean a dos decimales.<br>
-    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 19 · Menú de sistemas
+    Powered by <a href="https://leidertisnado.com/" target="_blank" rel="noopener noreferrer">leidertisnado.com</a> · Versión 20 · Menú de sistemas
   </footer>
 </div>
 `;
@@ -603,9 +603,9 @@ function buildAsientos(){
     }
     const lineas=[];
     for(const l of map.values())
-      lineas.push({rol:'credito', dc:'C', cta:l.cta, me:r2(l.me), comentario:l.comentario, cc:''});
+      lineas.push({rol:'credito', dc:'C', cta:l.cta, me:r2(l.me), comentario:l.comentario, cc:k.cc});
     if(g.comision!==0) lineas.push({rol:'comision', dc:'D', cta:k.comision, me:r2(g.comision), comentario:k.glosa, cc:k.cc});
-    lineas.push({rol:'banco', dc:'D', cta:k.banco, me:r2(g.neto), comentario:k.glosa, cc:''});
+    lineas.push({rol:'banco', dc:'D', cta:k.banco, me:r2(g.neto), comentario:k.glosa, cc:k.cc});
     return {id:gi+1, comercio:g.comercio, fecha:g.fecha, iso:g.iso, tc,
             nTrx:g.trx.length, bruto:g.bruto, comision:g.comision, neto:g.neto,
             refCom:g.refCom, devolucion:g.devolucion,
