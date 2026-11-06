@@ -88,13 +88,13 @@ código, poner el repositorio como privado en GitHub.
    configurado (403 por defecto).
 4. **Convierte a moneda local** con un tipo de cambio por cada fecha de abono.
 5. **Exporta** un `.xlsx` con dos hojas:
-   - `SAP`: las columnas del asiento de SAP hasta «Posición del formulario principal»
-     (Cuenta, Nombre, Cuenta asociada (opcional), Débito/Crédito en ME, local y MS,
-     Comentarios, Referencia 1 y 2 vacías,
-     Centro de Costo y Posición del formulario principal), en el mismo orden que la pantalla
-     del asiento en SAP. «Posición del formulario principal» va vacía por ahora
-     (`LLENAR_POSICION` en `app.js`); al activarla, «Pagos de facturas de clientes» va solo en
-     las cuentas de efectivo y bancos (clase 10), porque SAP la rechaza en las demás. Importes
+   - `SAP`: las columnas visibles del asiento de SAP según la **parametrización del
+     formulario** (paso 2), en el mismo orden que la pantalla, hasta la última que el sistema
+     llena (Cuenta, Nombre, Cuenta asociada, Débito/Crédito en ME, local y MS, Comentarios,
+     Centro de Costo). Las demás columnas visibles intermedias van vacías.
+     «Posición del formulario principal» va vacía por ahora (`LLENAR_POSICION` en `app.js`);
+     al activarla, «Pagos de facturas de clientes» va solo en las cuentas de efectivo y bancos
+     (clase 10), porque SAP la rechaza en las demás. Importes
      como texto con prefijo de moneda
      (`USD 990.00`, `SOL 3,514.50`). Encabezado azul, cada asiento en su propio color de
      banda, débitos en azul y créditos en morado. Los estilos no cambian ningún valor.
@@ -137,8 +137,11 @@ desactiva mientras falte el tipo de cambio de esa fecha.
 ## Opciones de exportación
 
 - Fila en blanco entre asientos.
-- Columna «Cuenta asociada» después del nombre (con la misma cuenta), para las pantallas de
-  SAP que la muestran. Cada navegador recuerda si está marcada.
+- Parametrización del formulario «Registro en el diario»: la misma lista de columnas de SAP
+  (Parametrizaciones de formulario → Formato de tabla) con su casilla **Visible**, más
+  «Visualizar en ME» y «Visualizar en MS». Cada usuario marca las que tiene visibles en su SAP
+  para que al pegar cada valor caiga en su columna. Viene con la parametrización propuesta y
+  cada navegador recuerda la suya; «Restablecer valor propuesto» vuelve a la inicial.
 - Filtrar por fecha de abono o comercio y exportar solo los asientos marcados.
 
 ## Tecnología
